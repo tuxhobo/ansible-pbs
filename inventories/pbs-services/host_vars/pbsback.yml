@@ -1,0 +1,4 @@
+# ./inventories/pbs-services/host_vars/pbsback.yml
+#
+gotify:
+  app_name: Proxmox Backup Server Back

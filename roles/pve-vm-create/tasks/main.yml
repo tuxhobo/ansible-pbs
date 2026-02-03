@@ -1,0 +1,18 @@
+# ./roles/pve-vm-create/tasks/main.yml
+
+---
+- name: Validate vm_spec schema
+  import_tasks: asserts.yml
+
+- name: Render disk definitions
+  import_tasks: render_disks.yml
+
+- name: Render network definitions
+  import_tasks: render_networks.yml
+
+- name: Print debug information when requested
+  import_tasks: debug.yml
+  when: pve_vm_debug | default(false)
+
+- name: Create Proxmox VM
+  import_tasks: create_vm.yml

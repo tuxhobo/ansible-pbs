@@ -1,0 +1,8 @@
+# ./inventories/pbs-bootstrap/group_vars/all.yml
+#
+# domain and loaction information
+ansible_user: root
+ansible_python_interpreter: /usr/bin/python3
+
+timezone: America/New_York
+domain_name: lalalandus.com

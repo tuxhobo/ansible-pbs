@@ -1,0 +1,10 @@
+# ./roles/pve-vm-create/tasks/debug.yml
+#
+---
+- name: Debug rendered disk map
+  ansible.builtin.debug:
+    var: vm_disks
+
+- name: Debug rendered network map
+  ansible.builtin.debug:
+    var: vm_nets

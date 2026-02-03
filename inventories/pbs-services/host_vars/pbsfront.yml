@@ -1,0 +1,4 @@
+# ./inventories/pbs-services/host_vars/pbsfront.yml
+#
+gotify:
+  app_name: Proxmox Backup Server Front

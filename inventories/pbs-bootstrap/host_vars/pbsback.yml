@@ -1,0 +1,20 @@
+# ./inventories/pbs-bootstrap/host_vars/pbsback.yml
+#
+# Configuration values unique to each PBS instance
+hostname: pbsback
+fqdn: pbsback.lalalandus.com
+
+replication:
+  interface: ens19
+  address: 172.16.150.5/28
+  gateway: 172.16.150.1
+  remote_subnet: 172.16.100.0/28
+
+zfs_pool:
+  name: dfw_pool
+  device: /dev/sdb
+
+pbs_datastore:
+  name: secondary-backups
+  pool: dfw_pool
+  path: /mnt/datastore/dfw

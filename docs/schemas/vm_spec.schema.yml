@@ -1,0 +1,40 @@
+# ./docs/schemas/vm_specschema.yml
+#
+# Authoritative schema for the pve-vm-create role input.
+# This file is documentation and versioned reference.
+# Enforcement is done via asserts in the role.
+
+vm_spec:
+  id: integer # REQUIRED. Proxmox VMID
+  name: string # REQUIRED. VM name
+  node: string # REQUIRED. Proxmox node name
+  memory: integer # REQUIRED. MB
+  cores: integer # REQUIRED.
+
+  disks:
+  # REQUIRED. Ordered list.
+  - bus: scsi # REQUIRED. Only scsi supported.
+    storage: string # REQUIRED.
+    size: string # REQUIRED. e.g. 30G
+    options:
+      backup: boolean # REQUIRED. PBS must be false.
+      discard: on|off # OPTIONAL. Default: on
+      iothread: boolean # OPTIONAL. Default: true
+      replicate: boolean # OPTIONAL. Default: false
+
+  networks:
+  # REQUIRED. Ordered list.
+  - model: virtio # OPTIONAL. Default: virtio
+    bridge: string # REQUIRED.
+    options:
+      firewall: boolean # OPTIONAL. Default from vm_defaults
+
+  options:
+    # OPTIONAL. VM-level overrides.
+    bios: seabios
+    machine: q35
+    scsihw: virtio-scsi-single
+    agent: boolean
+    onboot: boolean
+    boot: string
+    ostype: l26

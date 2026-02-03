@@ -1,0 +1,15 @@
+# ./inventories/pbs-services/group_vars/pbs_primary.yml
+#
+# Configuration of the datastore
+
+pbs_role: primary
+
+pbs_datastore:
+  name: lalaland-backups
+  path: /mnt/datastore/dal
+
+pbs_users:
+- name: backup
+  role: DatastoreBackup
+- name: sync
+  role: DatastoreReader

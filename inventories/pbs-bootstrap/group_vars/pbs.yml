@@ -1,0 +1,11 @@
+# ./inventories/pbs-bootstrap/group_vars/pbs.yml
+#
+# Basic configuration parameters common to both PBS instances
+pbs:
+  packages:
+  - rsyslog
+
+zfs:
+  autotrim: true
+  ashift: 12
+  compression: on

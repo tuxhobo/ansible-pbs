@@ -1,0 +1,11 @@
+# /roles/pve-vm-create/defaults/main.yml
+
+---
+vm_defaults:
+  bios: seabios
+  machine: q35
+  scsihw: virtio-scsi-single
+  agent: true
+  onboot: true
+  boot: "order=scsi0"
+  ostype: l26

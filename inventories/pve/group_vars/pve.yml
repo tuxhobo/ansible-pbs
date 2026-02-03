@@ -1,0 +1,40 @@
+# ./inventories/pve/group_vars/pve.yml
+#
+# define the virtual machines that contain the PBS entities.
+
+pve_pbs_vms:
+- vmid: 109 # define the primary PBS instance on lala100
+  name: pbsfront
+  target_node: lala100 # Host PVE machine name for VM
+  memory: 2048
+  cores: 2
+  disks:
+  - size: 30G # VM boot and system disk
+    storage: local-lvm
+    options:
+      backup: false
+  - size: 400G # VM data disk. Allow default thin provisioning
+    storage: local-lvm
+    options:
+      backup: false
+  networks:
+  - bridge: vmbr0 # management interface defined by lala100
+  - bridge: vmbr1 # replication interface defined by lala100
+
+- vmid: 159 # define the secondary PBS instance on lala150
+  name: pbsback
+  target_node: lala150 # Host PVE machine name for VM
+  memory: 2048
+  cores: 2
+  disks:
+  - size: 30G # VM boot and system disk
+    storage: local-lvm
+    options:
+      backup: false
+  - size: 400G # VM data disk. Allow default thin provisioning
+    storage: local-lvm
+    options:
+      backup: false
+  networks:
+  - bridge: vmbr0 # management interface defined by lala150
+  - bridge: vmbr1 # replication interface defined by lala150

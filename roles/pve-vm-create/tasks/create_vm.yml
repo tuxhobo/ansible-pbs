@@ -1,0 +1,26 @@
+# ./roles/pve-vm-create/tasks/create_vm.yml
+---
+- name: Create or update Proxmox VM
+  community.general.proxmox_kvm:
+    api_user: "{{ pve_api_user }}"
+    api_password: "{{ pve_api_password }}"
+    api_host: "{{ pve_api_host }}"
+    node: "{{ pve_api_node }}"
+
+    vmid: "{{ vm_spec.id }}"
+    name: "{{ vm_spec.name }}"
+    memory: "{{ vm_spec.memory }}"
+    cores: "{{ vm_spec.cores }}"
+
+    bios: "{{ vm_spec.options.bios | default(vm_defaults.bios) }}"
+    machine: "{{ vm_spec.options.machine | default(vm_defaults.machine) }}"
+    scsihw: "{{ vm_spec.options.scsihw | default(vm_defaults.scsihw) }}"
+    agent: "{{ vm_spec.options.agent | default(vm_defaults.agent) | bool }}"
+    onboot: "{{ vm_spec.options.onboot | default(vm_defaults.onboot) | bool }}"
+    boot: "{{ vm_spec.options.boot | default(vm_defaults.boot) }}"
+    ostype: "{{ vm_spec.options.ostype | default(vm_defaults.ostype) }}"
+
+    disks: "{{ vm_disks }}"
+    net: "{{ vm_nets }}"
+
+    state: present
