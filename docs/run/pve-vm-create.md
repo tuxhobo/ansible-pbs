@@ -36,6 +36,31 @@ It intentionally stops **before**:
 - PBS ISO is already downloaded to Proxmox ISO storage
 - Inventory changes are committed
 - Playbooks run from the Ansible control host
+- Valid api-token for the pve cluster in the ansible vault
+
+### Steps to create the api-token
+Do this step  from the pve shell if the token is invalid or deleted.
+The api-token is valid for all nodes in the cluster.
+Create ansible@pam user (may need to delete it from the UI first)
+and assign proper acl role then get the api-token.
+```bash
+root@lala100:~# pveum user add ansible@pam
+root@lala100:~# pveum aclmod /vms -user ansible@pam -role PVEAdmin
+root@lala100:~# pveum user token add ansible@pam automation --privsep 0
+```
+The output looks something like this:
+┌──────────────┬──────────────────────────────────────┐
+│ key          │ value                                │
+╞══════════════╪══════════════════════════════════════╡
+│ full-tokenid │ ansible@pam!automation               │
+├──────────────┼──────────────────────────────────────┤
+│ info         │ {"privsep":"0"}                      │
+├──────────────┼──────────────────────────────────────┤
+│ value        │ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx │
+└──────────────┴──────────────────────────────────────┘
+
+Copy the api-token value into the ansible vault.
+
 
 ---
 

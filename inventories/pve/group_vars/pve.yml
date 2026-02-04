@@ -1,7 +1,13 @@
 # ./inventories/pve/group_vars/pve.yml
 #
-# define the virtual machines that contain the PBS entities.
 
+# Proxmox API interface (non-secret)
+pve_api_user: ansible@pam
+pve_api_token_id: ansible@pam!automation
+pve_api_host: "{{ ansible_host }}"
+pve_api_node: "{{ inventory_hostname }}"
+
+# Proxmox Backup Server VM definitions
 pve_pbs_vms:
 - vmid: 109 # define the primary PBS instance on lala100
   name: pbsfront

@@ -2,11 +2,12 @@
 ---
 - name: Create or update Proxmox VM
   community.general.proxmox_kvm:
-    api_user: "{{ pve_api_user }}"
-    api_password: "{{ pve_api_password }}"
     api_host: "{{ pve_api_host }}"
-    node: "{{ pve_api_node }}"
+    api_user: "{{ pve_api_user }}"
+    api_token_id: "{{ pve_api_token_id }}"
+    api_token_secret: "{{ vault_pve_api_token }}"
 
+    node: "{{ pve_api_node }}"
     vmid: "{{ vm_spec.id }}"
     name: "{{ vm_spec.name }}"
     memory: "{{ vm_spec.memory }}"
