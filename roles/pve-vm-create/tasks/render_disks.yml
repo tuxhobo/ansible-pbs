@@ -1,32 +1,30 @@
 # ./roles/pve-vm-create/tasks/render_disks.yml
 ---
-- name: Render Proxmox disk map
+- name: Initialize disk map
+  ansible.builtin.set_fact:
+    vm_disks: {}
+
+- name: Render Proxmox disk entries
   ansible.builtin.set_fact:
     vm_disks: >-
       {{
-        dict(
-          vm_spec.disks
-          | enumerate
-          | map(
-              attribute=1,
-              transform=lambda d, idx=loop.index0:
-                {
-                  (d.bus ~ idx): {
-                    'storage': d.storage,
-                    'size': d.size,
-                    'backup': d.options.backup | bool,
-                    'discard': d.options.discard
-                               | default(vm_defaults.disk.discard),
-                    'iothread': d.options.iothread
-                                 | default(vm_defaults.disk.iothread)
-                                 | bool,
-                    'replicate': d.options.replicate
-                                  | default(vm_defaults.disk.replicate)
-                                  | bool
-                  }
-                }
-            )
-          | list
-          | combine
-        )
+        vm_disks | combine({
+          (item.bus ~ idx): {
+            'storage': item.storage,
+            'size': item.size,
+            'backup': item.options.backup | bool,
+            'discard': item.options.discard
+                       | default(vm_defaults.disk.discard),
+            'iothread': item.options.iothread
+                         | default(vm_defaults.disk.iothread)
+                         | bool,
+            'replicate': item.options.replicate
+                          | default(vm_defaults.disk.replicate)
+                          | bool
+          }
+        })
       }}
+  loop: "{{ vm_spec.disks }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.storage }} {{ item.size }}"

@@ -1,26 +1,24 @@
 # ./roles/pve-vm-create/tasks/render_networks.yml
 ---
-- name: Render Proxmox network map
+- name: Initialize network map
+  ansible.builtin.set_fact:
+    vm_nets: {}
+
+- name: Render Proxmox network entries
   ansible.builtin.set_fact:
     vm_nets: >-
       {{
-        dict(
-          vm_spec.networks
-          | enumerate
-          | map(
-              attribute=1,
-              transform=lambda n, idx=loop.index0:
-                {
-                  ('net' ~ idx): {
-                    'bridge': n.bridge,
-                    'model': n.model | default('virtio'),
-                    'firewall': n.options.firewall
-                                | default(vm_defaults.net.firewall)
-                                | bool
-                  }
-                }
-            )
-          | list
-          | combine
-        )
+        vm_nets | combine({
+          ('net' ~ idx): {
+            'bridge': item.bridge,
+            'model': item.model | default('virtio'),
+            'firewall': item.options.firewall
+                        | default(vm_defaults.net.firewall)
+                        | bool
+          }
+        })
       }}
+  loop: "{{ vm_spec.networks }}"
+  loop_control:
+    index_var: idx
+    label: "{{ item.bridge }}"
