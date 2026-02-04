@@ -70,6 +70,11 @@ Validate inventory graph:
 ```bash
 ansible-inventory --graph || exit 1
 ```
+### Validate inventory read and vault access
+```bash
+ansible-inventory -i inventories/pve/hosts.yml --list --ask-vault-pass
+```
+
 ### Expected result
 ```
 @all:
@@ -81,8 +86,8 @@ ansible-inventory --graph || exit 1
 
 Validate inventory parsing and variable resolution.
 ```bash
-ansible-inventory -i inventories/pve/hosts.yml --host lala100
-ansible-inventory -i inventories/pve/hosts.yml --host lala150
+ansible-inventory -i inventories/pve/hosts.yml --host lala100 --ask-vault-pass
+ansible-inventory -i inventories/pve/hosts.yml --host lala150 --ask-vault-pass
 ```
 ### Expected result
 - Commands succeed
