@@ -64,10 +64,22 @@ Copy the api-token value into the ansible vault.
 
 ---
 
-## Step 1: Inventory validation
+## Step 1: Inventory validation from ansible host
+
+Validate inventory graph:
+```bash
+ansible-inventory --graph || exit 1
+```
+### Expected result
+```
+@all:
+  |--@ungrouped:
+  |--@pve:
+  |  |--lala100
+  |  |--lala150
+```
 
 Validate inventory parsing and variable resolution.
-
 ```bash
 ansible-inventory -i inventories/pve/hosts.yml --host lala100
 ansible-inventory -i inventories/pve/hosts.yml --host lala150

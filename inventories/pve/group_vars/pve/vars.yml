@@ -1,4 +1,4 @@
-# ./inventories/pve/group_vars/pve.yml
+# ./inventories/pve/group_vars/pve/vars.yml
 #
 
 # Proxmox API interface (non-secret)
