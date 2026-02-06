@@ -3,7 +3,7 @@
 
 # Proxmox API interface (non-secret)
 pve_api_user: ansible@pam
-pve_api_token_id: ansible@pam!automation
+pve_api_token_id: automation
 pve_api_host: "{{ ansible_host }}"
 pve_api_node: "{{ inventory_hostname }}"
 
@@ -14,6 +14,7 @@ pve_pbs_vms:
   target_node: lala100 # Host PVE machine name for VM
   memory: 2048
   cores: 2
+  sockets: 1
   disks:
   - size: 30G # VM boot and system disk
     storage: local-lvm
@@ -32,6 +33,7 @@ pve_pbs_vms:
   target_node: lala150 # Host PVE machine name for VM
   memory: 2048
   cores: 2
+  sockets: 1
   disks:
   - size: 30G # VM boot and system disk
     storage: local-lvm

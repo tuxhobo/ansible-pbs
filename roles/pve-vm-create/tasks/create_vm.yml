@@ -7,21 +7,27 @@
     api_token_id: "{{ pve_api_token_id }}"
     api_token_secret: "{{ vault_pve_api_token }}"
 
-    node: "{{ pve_api_node }}"
+    # General 
+    node: "{{ inventory_hostname }}"
     vmid: "{{ vm_spec.id }}"
     name: "{{ vm_spec.name }}"
-    memory: "{{ vm_spec.memory }}"
-    cores: "{{ vm_spec.cores }}"
-
-    bios: "{{ vm_spec.options.bios | default(vm_defaults.bios) }}"
-    machine: "{{ vm_spec.options.machine | default(vm_defaults.machine) }}"
-    scsihw: "{{ vm_spec.options.scsihw | default(vm_defaults.scsihw) }}"
-    agent: "{{ vm_spec.options.agent | default(vm_defaults.agent) | bool }}"
     onboot: "{{ vm_spec.options.onboot | default(vm_defaults.onboot) | bool }}"
-    boot: "{{ vm_spec.options.boot | default(vm_defaults.boot) }}"
+    # OS
     ostype: "{{ vm_spec.options.ostype | default(vm_defaults.ostype) }}"
+    boot: "{{ vm_spec.options.boot | default(vm_defaults.boot) }}"
+    # System
+    machine: "{{ vm_spec.options.machine | default(vm_defaults.machine) }}"
+    bios: "{{ vm_spec.options.bios | default(vm_defaults.bios) }}"
+    agent: "{{ vm_spec.options.agent | default(vm_defaults.agent) | bool }}"
+    # Disks
+    scsihw: "{{ vm_spec.options.scsihw | default(vm_defaults.scsihw) }}"
+    # CPU
+    cores: "{{ vm_spec.cores }}"
+    sockets: "{{ vm_spec.sockets }}"
+    # Memory
+    memory: "{{ vm_spec.memory }}"
 
-    disks: "{{ vm_disks }}"
-    net: "{{ vm_nets }}"
+    scsi: "{{ vm_scsi }}"
+    net: "{{ vm_net }}"
 
     state: present

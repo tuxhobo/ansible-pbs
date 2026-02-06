@@ -44,3 +44,10 @@
     - vm_spec.options is mapping
     fail_msg: "vm_spec.options must be a mapping"
   when: vm_spec.options is defined
+
+- name: Assert that disks and networks are defined
+  ansible.builtin.assert:
+    that:
+    - vm_spec.disks is defined
+    - vm_spec.networks is defined
+    fail_msg: "vm_disks and vm_nets must be defined before creating VM"

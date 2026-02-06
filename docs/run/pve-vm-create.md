@@ -31,6 +31,10 @@ It intentionally stops **before**:
 
 ## Preconditions
 
+- Ansible installed on ansible host
+  - sudo apt install ansible
+- Install proximer api wraper
+  - pip install proximer
 - Proxmox VE cluster is healthy
 - Target nodes are reachable
 - PBS ISO is already downloaded to Proxmox ISO storage
@@ -49,15 +53,12 @@ root@lala100:~# pveum aclmod /vms -user ansible@pam -role PVEAdmin
 root@lala100:~# pveum user token add ansible@pam automation --privsep 0
 ```
 The output looks something like this:
-┌──────────────┬──────────────────────────────────────┐
+
 │ key          │ value                                │
-╞══════════════╪══════════════════════════════════════╡
+| ------------ | ------------------------------------ |
 │ full-tokenid │ ansible@pam!automation               │
-├──────────────┼──────────────────────────────────────┤
 │ info         │ {"privsep":"0"}                      │
-├──────────────┼──────────────────────────────────────┤
 │ value        │ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx │
-└──────────────┴──────────────────────────────────────┘
 
 Copy the api-token value into the ansible vault.
 
@@ -109,7 +110,7 @@ Fix inventory before proceeding.
 
 Run the VM creation playbook in check mode.
 ```bash
-ansible-playbook playbooks/pve-vm-create.yml --check
+ansible-playbook playbooks/pve-vm-create.yml --check --ask-vault-pass
 ```
 
 ### Expected result

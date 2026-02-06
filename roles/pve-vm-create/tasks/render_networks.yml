@@ -1,24 +1,29 @@
 # ./roles/pve-vm-create/tasks/render_networks.yml
 ---
-- name: Initialize network map
-  ansible.builtin.set_fact:
-    vm_nets: {}
+- name: Assert network inventory is valid
+  assert:
+    that:
+    - vm_spec.networks is defined
+    - vm_spec.networks | length > 0
+    - vm_spec.networks | map(attribute='id') | list | length == vm_spec.networks | length
+    fail_msg: "vm_spec.networks is missing or malformed"
 
-- name: Render Proxmox network entries
-  ansible.builtin.set_fact:
-    vm_nets: >-
+- name: Render net map for proxmox_kvm
+  set_fact:
+    vm_net: >-
       {{
-        vm_nets | combine({
-          ('net' ~ idx): {
-            'bridge': item.bridge,
-            'model': item.model | default('virtio'),
-            'firewall': item.options.firewall
-                        | default(vm_defaults.net.firewall)
-                        | bool
-          }
+        vm_net | default({}) |
+        combine({
+          item.key: (
+            item.value.model
+            ~ ',bridge=' ~ item.value.bridge
+            ~ (',firewall=' ~ item.value.firewall if item.value.firewall is defined else '')
+          )
         })
       }}
-  loop: "{{ vm_spec.networks }}"
-  loop_control:
-    index_var: idx
-    label: "{{ item.bridge }}"
+  loop: "{{ vm_spec.networks | dict2items }}"
+
+- name: Debug rendered net map
+  debug:
+    var: vm_net
+  when: ansible_verbosity | int >= 2

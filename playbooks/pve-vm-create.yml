@@ -3,12 +3,10 @@
 ---
 - name: Create PBS VMs on Proxmox
   hosts: pve
+  connection: local
   gather_facts: false
-  become: true
-
+  
   vars:
-    pve_api_user: root@pam
-    pve_api_password: "{{ vault_pve_api_password }}"
     pve_api_host: "{{ ansible_host }}"
     pve_api_node: "{{ inventory_hostname }}"
 
@@ -34,6 +32,7 @@
           node: "{{ project_vm.target_node }}"
           memory: "{{ project_vm.memory }}"
           cores: "{{ project_vm.cores }}"
+          sockets: "{{ project_vm.sockets }}"
 
           disks: >-
             {{

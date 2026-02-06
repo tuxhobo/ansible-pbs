@@ -1,30 +1,29 @@
 # ./roles/pve-vm-create/tasks/render_disks.yml
 ---
-- name: Initialize disk map
-  ansible.builtin.set_fact:
-    vm_disks: {}
+- name: Assert disk inventory is valid
+  assert:
+    that:
+    - vm_spec.disks is defined
+    - vm_spec.disks | length > 0
+    - vm_spec.disks | map(attribute='id') | list | length == vm_spec.disks | length
+    fail_msg: "vm_spec.disks is missing or malformed"
 
-- name: Render Proxmox disk entries
-  ansible.builtin.set_fact:
-    vm_disks: >-
+- name: Render scsi disk map for proxmox_kvm
+  set_fact:
+    vm_scsi: >-
       {{
-        vm_disks | combine({
-          (item.bus ~ idx): {
-            'storage': item.storage,
-            'size': item.size,
-            'backup': item.options.backup | bool,
-            'discard': item.options.discard
-                       | default(vm_defaults.disk.discard),
-            'iothread': item.options.iothread
-                         | default(vm_defaults.disk.iothread)
-                         | bool,
-            'replicate': item.options.replicate
-                          | default(vm_defaults.disk.replicate)
-                          | bool
-          }
+        vm_scsi | default({}) |
+        combine({
+          item.key: (
+            item.value.storage ~ ':' ~ item.value.size
+            ~ (',iothread=' ~ item.value.iothread if item.value.iothread is defined else '')
+            ~ (',discard=' ~ item.value.discard if item.value.discard is defined else '')
+          )
         })
       }}
-  loop: "{{ vm_spec.disks }}"
-  loop_control:
-    index_var: idx
-    label: "{{ item.storage }} {{ item.size }}"
+  loop: "{{ vm_spec.disks | dict2items }}"
+
+- name: Debug rendered scsi map
+  debug:
+    var: vm_scsi
+  when: ansible_verbosity | int >= 2
