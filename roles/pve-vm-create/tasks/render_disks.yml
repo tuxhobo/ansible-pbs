@@ -1,27 +1,23 @@
 # ./roles/pve-vm-create/tasks/render_disks.yml
 ---
-- name: Assert disk inventory is valid
+- name: Assert disk inventory shape
   assert:
     that:
-    - vm_spec.disks is defined
+    - vm_spec.disks is mapping
     - vm_spec.disks | length > 0
-    - vm_spec.disks | map(attribute='id') | list | length == vm_spec.disks | length
-    fail_msg: "vm_spec.disks is missing or malformed"
+    fail_msg: "vm_spec.disks must be a non-empty dictionary keyed by scsiX"
 
 - name: Render scsi disk map for proxmox_kvm
   set_fact:
     vm_scsi: >-
       {{
-        vm_scsi | default({}) |
-        combine({
-          item.key: (
-            item.value.storage ~ ':' ~ item.value.size
-            ~ (',iothread=' ~ item.value.iothread if item.value.iothread is defined else '')
-            ~ (',discard=' ~ item.value.discard if item.value.discard is defined else '')
+        vm_spec.disks
+        | dict2items
+        | items2dict(
+            key_name='key',
+            value_name='value'
           )
-        })
       }}
-  loop: "{{ vm_spec.disks | dict2items }}"
 
 - name: Debug rendered scsi map
   debug:

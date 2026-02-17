@@ -1,27 +1,23 @@
 # ./roles/pve-vm-create/tasks/render_networks.yml
 ---
-- name: Assert network inventory is valid
+- name: Assert network inventory shape
   assert:
     that:
-    - vm_spec.networks is defined
+    - vm_spec.networks is mapping
     - vm_spec.networks | length > 0
-    - vm_spec.networks | map(attribute='id') | list | length == vm_spec.networks | length
-    fail_msg: "vm_spec.networks is missing or malformed"
+    fail_msg: "vm_spec.networks must be a non-empty dictionary keyed by netX"
 
-- name: Render net map for proxmox_kvm
+- name: Render network map for proxmox_kvm
   set_fact:
     vm_net: >-
       {{
-        vm_net | default({}) |
-        combine({
-          item.key: (
-            item.value.model
-            ~ ',bridge=' ~ item.value.bridge
-            ~ (',firewall=' ~ item.value.firewall if item.value.firewall is defined else '')
+        vm_spec.networks
+        | dict2items
+        | items2dict(
+            key_name='key',
+            value_name='value'
           )
-        })
       }}
-  loop: "{{ vm_spec.networks | dict2items }}"
 
 - name: Debug rendered net map
   debug:
