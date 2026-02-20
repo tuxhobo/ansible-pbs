@@ -1,19 +1,5 @@
 # /roles/pve-vm-create/defaults/main.yml
 
 ---
-vm_defaults:
-  disk:
-    discard: on
-    iothread: true
-    replicate: false
-
-  net:
-    firewall: false
-
-  bios: seabios
-  machine: q35
-  scsihw: virtio-scsi-single
-  agent: true
-  onboot: true
-  boot: order=scsi0
-  ostype: l26
+vm_defaults: {}
+pve_api: {}

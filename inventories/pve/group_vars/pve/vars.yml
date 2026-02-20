@@ -1,63 +1,39 @@
 # ./inventories/pve/group_vars/pve/vars.yml
 #
 
+# Cluster-wide defaults
+vm_defaults:
+  bios: seabios
+  machine: q35
+  scsihw: virtio-scsi-single
+  agent: true
+  onboot: true
+  cpu: host
+  sockets: 1
+  cores: 2
+  memory: 4096
+
+  disks:
+    scsi0: "local-lvm:30,backup=0,discard=on,iothread=1"
+    scsi1: "local-lvm:400,backup=0,discard=on,iothread=1"
+  networks:
+    net0: "virtio,bridge=vmbr0,firewall=1"
+    net1: "virtio,bridge=vmbr1,firewall=1"
+
 # Proxmox API interface (non-secret)
-pve_api_user: ansible@pam
-pve_api_token_id: automation
-pve_api_host: "{{ ansible_host }}"
+pve_api:
+  host: "{{ ansible_host }}"
+  user: ansible@pam
+  token_id: automation
+  token_secret: "{{ vault_pve_api_token }}"
+  validate_certs: false
 
 # Proxmox Backup Server VM definitions
 pve_pbs_vms:
-- vmid: 109 # define the primary PBS instance on lala100
-  name: pbsfront
-  target_node: lala100 # Host PVE machine name for VM
-  memory: 2048
-  cores: 2
-  sockets: 1
+- name: pbsfront
+  vmid: 109 # define the primary PBS instance on lala100
+  node: lala100 # Host PVE machine name for VM
 
-  disks:
-    scsi0:
-      # VM boot and system disk
-      storage: local-lvm
-      size: 30G
-      options:
-        backup: false
-    scsi1:
-      # VM data disk. Allow default thin provisioning
-      storage: local-lvm
-      size: 400G
-      options:
-        backup: false
-
-  networks:
-    net0:
-      bridge: vmbr0 # management interface defined by lala100
-    net1:
-      bridge: vmbr1 # replication interface defined by lala100
-
-- vmid: 159 # define the secondary PBS instance on lala150
-  name: pbsback
-  target_node: lala150
-  memory: 2048
-  cores: 2
-  sockets: 1
-
-  disks:
-    scsi0:
-      # VM boot and system disk
-      storage: local-lvm
-      size: 30G
-      options:
-        backup: false
-    scsi1:
-      # VM data disk. Allow default thin provisioning
-      storage: local-lvm
-      size: 400G
-      options:
-        backup: false
-
-  networks:
-    net0:
-      bridge: vmbr0 # management interface defined by lala150
-    net1:
-      bridge: vmbr1 # replication interface defined by lala150
+- name: pbsback
+  vmid: 159 # define the secondary PBS instance on lala150
+  node: lala150

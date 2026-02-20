@@ -14,16 +14,13 @@ It is designed to be **predictable, idempotent, and auditable**.
 
 ## Design Principles
 
-1. **Declarative input**
+1. **Designed for community.general.proxmox_kvm**
     - Inventory expresses intent and policy
+    - Inventory shape guided by community.general.proxmox_kvm
     - VM intent lives in inventory
     - Playbook performs translation
     - Role enforces execution and defaults
     - No hidden defaults in tasks
-
-2. **Explicit contracts**
-   - The role consumes a single variable: `vm_spec`
-   - Structure is validated before execution
 
 3. **Separation of concerns**
    - Inventory: project intent

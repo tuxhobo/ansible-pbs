@@ -52,6 +52,7 @@ root@lala100:~# pveum user add ansible@pam
 root@lala100:~# pveum aclmod /vms -user ansible@pam -role PVEAdmin
 root@lala100:~# pveum user token add ansible@pam automation --privsep 0
 ```
+
 The output looks something like this:
 
 │ key          │ value                                │
@@ -62,8 +63,19 @@ The output looks something like this:
 
 Copy the api-token value into the ansible vault.
 
+Once the token is created, then assign the proper role to the token.
+```bash
+root@lala100:~# pveum acl modify / --tokens 'ansible@pam!automation' --role 'PVEAdmin'
+```
 
+Verify that the token and role are properly extablished with the following command from the ansible host:
+```bash
+ted@DESKTOP-TJG7MV1:~/home-lab/ansible-pbs$ curl -k -X GET "https://10.0.0.100:8006/api2/json/access/permissions"   -H 'Authorization: PVEAPIToken=ansible@pam!automation=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+```
 ---
+If the output is empty {"data": {}}: The token authenticated, but it has no assigned roles.
+If the output is 403: The token secret is likely incorrect or the token has been disabled.
+The token and assigned roles are correct if the data shows the list of resource access allowed.
 
 ## Step 1: Inventory validation from ansible host
 
@@ -76,7 +88,7 @@ ansible-inventory --graph || exit 1
 ansible-inventory -i inventories/pve/hosts.yml --list --ask-vault-pass
 ```
 
-### Expected result
+### Expected result from ansib;e-inventory --graph
 ```
 @all:
   |--@ungrouped:
@@ -134,13 +146,14 @@ ansible-playbook playbooks/pve-vm-create.yml
 ```
 Run for a single VM (recomended)
 ```bash
-ansible-playbook playbooks/pve-vm-create.yml --limit lala100
+ansible-playbook playbooks/pve-vm-create.yml --limit lala100 --ask-vault-pass
 ```
 ### Expected result
 - VM(s) created or confirmed present
 - VMs are not automatically started
 - Disk backup flags are disabled
 
+Change to --limit lala150 to install the pbsback vm or remove the limit flag to install both VMs in sequence.
 ---
 
 ## Step 4: Manual PBS installation

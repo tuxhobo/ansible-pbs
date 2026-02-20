@@ -1,18 +1,60 @@
 # ./roles/pve-vm-create/tasks/main.yml
 
 ---
-- name: Validate vm_spec schema
-  import_tasks: asserts.yml
+- name: Extract current VM specification from list
+  set_fact:
+    # Use the 'item' passed from the playbook
+    vm_spec: "{{ item }}"
 
-- name: Render disk definitions
-  import_tasks: render_disks.yml
+- name: Merge defaults with specific VM config
+  set_fact:
+    vm_final: "{{ vm_defaults | combine(vm_spec, recursive=True) }}"
 
-- name: Render network definitions
-  import_tasks: render_networks.yml
+- name: Check if VM already exists
+  community.general.proxmox_vm_info:
+    api_host: "{{ pve_api.host }}"
+    api_user: "{{ pve_api.user }}"
+    api_token_id: "{{ pve_api.token_id }}"
+    api_token_secret: "{{ pve_api.token_secret }}"
+    validate_certs: "{{ pve_api.validate_certs }}"
+    node: "{{ vm_final.node }}"
+    vmid: "{{ vm_final.vmid | int }}"
+  register: vm_status
+  ignore_errors: true
 
-- name: Print debug information when requested
-  import_tasks: debug.yml
-  when: pve_vm_debug | default(false)
+- name: Set existence flag
+  set_fact:
+    vm_exists: "{{ vm_status.proxmox_vms | length > 0 }}"
 
-- name: Create Proxmox VM
-  import_tasks: create_vm.yml
+- name: DEBUG - Show VM Status
+  debug:
+    msg: "VM {{ vm_final.name }} (ID: {{ vm_final.vmid }}) exists: {{ vm_exists }}"
+
+- name: Create or update Proxmox VM
+  community.general.proxmox_kvm:
+    api_host: "{{ pve_api.host }}"
+    api_user: "{{ pve_api.user }}"
+    api_token_id: "{{ pve_api.token_id }}"
+    api_token_secret: "{{ pve_api.token_secret }}"
+    validate_certs: "{{ pve_api.validate_certs }}"
+
+    # General 
+    node: "{{ vm_final.node }}"
+    vmid: "{{ vm_final.vmid | int}}"
+    name: "{{ vm_final.name }}"
+    state: present
+    update: "{{ vm_exists | bool }}"
+
+    bios: "{{ vm_final.bios }}"
+    machine: "{{ vm_final.machine }}"
+    scsihw: "{{ vm_final.scsihw }}"
+    agent: "{{ vm_final.agent }}"
+    onboot: "{{ vm_final.onboot }}"
+
+    sockets: "{{ vm_final.sockets }}"
+    cores: "{{ vm_final.cores }}"
+    memory: "{{ vm_final.memory }}"
+    cpu: "{{ vm_final.cpu }}"
+
+    scsi: "{{ vm_final.disks }}"
+    net: "{{ vm_final.networks }}"    

@@ -6,50 +6,12 @@
   connection: local
   gather_facts: false
   
-  vars:
-    pve_api_host: "{{ ansible_host }}"
-    pve_api_node: "{{ inventory_hostname }}"
 
   tasks:
-    - name: Select PBS VMs for this node
-      ansible.builtin.set_fact:
-        project_vms: >-
-          {{ pve_pbs_vms
-             | selectattr('target_node', 'equalto', inventory_hostname)
-             | list }}
-
-    - name: Create PBS VMs
-      ansible.builtin.include_role:
+    - name: Create VMs
+      include_role:
         name: pve-vm-create
-      loop: "{{ project_vms }}"
+      loop: "{{ pve_pbs_vms }}"
+      when: item.node == inventory_hostname
       loop_control:
-        loop_var: project_vm
-        label: "{{ project_vm.name }}"
-      vars:
-        vm_spec:
-          id: "{{ project_vm.vmid }}"
-          name: "{{ project_vm.name }}"
-          node: "{{ project_vm.target_node }}"
-          memory: "{{ project_vm.memory }}"
-          cores: "{{ project_vm.cores }}"
-          sockets: "{{ project_vm.sockets }}"
-
-          disks: >-
-            {{
-              project_vm.disks | map(
-                'combine',
-                {
-                  'bus': 'scsi'
-                }
-              ) | list
-            }}
-
-          networks: >-
-            {{
-              project_vm.networks | map(
-                'combine',
-                {
-                  'model': 'virtio'
-                }
-              ) | list
-            }}
+        label: "{{ item.name }} on {{ item.node }}"
