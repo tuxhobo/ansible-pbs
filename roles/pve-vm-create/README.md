@@ -1,9 +1,16 @@
-# pve-vm-create
+# ./roles/pve-vm-create/tasks/README.md
 
 Generic role to create Proxmox virtual machines.
 Create and maintain Proxmox VE virtual machines from declarative inventory data.
 
-This role is intentionally narrow in scope:
+This role is a thin, explicit wrapper around
+community.general.proxmox_kvm.
+- Inventory defines the VM 
+- The role applies it.
+   - Inventory passed directly to the module
+- Nothing more.
+
+The role is intentionally narrow in scope:
 - VM definition and creation only
 - No guest OS configuration
 - No lifecycle automation beyond `state: present`
@@ -18,54 +25,41 @@ It is designed to be **predictable, idempotent, and auditable**.
     - Inventory expresses intent and policy
     - Inventory shape guided by community.general.proxmox_kvm
     - VM intent lives in inventory
-    - Playbook performs translation
-    - Role enforces execution and defaults
     - No hidden defaults in tasks
+    - No hidden defaults
+    - No schema mutation inside the role
+    - Compatible with check mode
+    - Compatible with API token authentication
 
-3. **Separation of concerns**
-   - Inventory: project intent
-   - Playbook: mapping and normalization
-   - Role: rendering and execution
-   - Defaults: system-level assumptions
+2. ## Required Inventory Structure
+Each VM must define a dictionary compatible with `community.general.proxmox_kvm`.
+- disks must be structured exactly as expected by the module.
+- net must follow module syntax.
 
-4. **Fail fast**
-   - Schema violations stop execution early
-   - UI drift is treated as configuration error
+No transformation occurs in the role.
+
+3. **Authentication Model**
+
+The role supports API authentication
+SSH is not used
+API token must be first be created on the target
+API token is stored in Ansible Vault
 
 ---
 
 ## vm_spec
 
 `vm_spec` is the authoritative input contract passed from the playbook into the role.
-
-It is **not** read from inventory directly.
-
-See:
-docs/vm_spec.schema.yml
-
-for the full authoritative schema.
-
-### Key characteristics
-
-- Ordered disks and networks
-- Explicit disk `backup` flag (required)
-- Optional overrides via `vm_spec.options`
-- All assumptions centralized in `vm_defaults`
-
+Each VM must define a dictionary compatible with `community.general.proxmox_kvm`.
 ---
 
 ## Defaults
 
-System-level defaults live in:
-defaults/main.yml
+Cluster-wide defaults can be defined in pve_vm_defaults.
+The role merges pve_vm_defaults + vm_spec.
+vm_spec overrides defaults.
+The merge is recursive.
 
-
-These represent:
-- Proxmox-wide conventions
-- Safe assumptions
-- Settings that rarely change
-
-Inventory overrides should be **intentional and minimal**.
 
 ---
 
@@ -83,12 +77,64 @@ This is by design.
 
 ---
 
-## Debugging
+## What This Role Does
+- Creates VM if missing
+- Updates VM if configuration differs
+- Supports check mode
+- Passes parameters directly to the module
 
-Optional debug output is available:
+It does not manage:
+- Cloud-init configuration
+- Guest OS configuration
+- Post-boot provisioning
+- Network configuration inside the guest
+- Storage pools
+- ISO uploads
 
-```bash
-ansible-playbook playbooks/pve-vm-create.yml \
-  -e pve_vm_debug=true
+It strictly manages Proxmox VM hardware configuration.
+---
 
+## State Handling
+
+Supported states:
+```yaml
+state: present
+state: absent
+```
+
+If not defined, defaults to ```present```.
+
+---
+
+## Idempotency Notes
+- Disk size changes are applied if supported by Proxmox.
+- Certain hardware changes may require VM shutdown.
+- The module does not automatically handle complex disk migrations.
+- Inventory should reflect final desired state.
+
+---
+
+## Role Boundaries
+This role:
+- Defines VM hardware
+- Attaches disks
+- Attaches networks
+- Enables guest agent
+- Sets boot order
+This role does not:
+- Configure PBS
+- Configure ZFS
+- Configure networking inside the VM
+- Perform OS installation
+
+Those responsibilities belong in separate roles.
+
+---
+
+## Operational Guidance
+- Keep VM definitions declarative.
+- Avoid dynamic computation inside inventory.
+- Prefer explicit disk definitions.
+- Treat inventory as the single source of truth.
+- Avoid mixing provisioning logic into this role.
 
