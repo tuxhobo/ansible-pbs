@@ -1,5 +1,17 @@
 # ./inventories/pve/group_vars/pve/vars.yml
 #
+# -----------------------------------------------------------------------------
+# Proxmox VM Inventory
+#
+# This file is the single source of truth for VM definitions.
+# Structure matches community.general.proxmox_kvm module arguments.
+#
+# Rules:
+# - All values here override pve_vm_defaults (if defined).
+# - Omitted values fall back to role defaults.
+# - Do not duplicate defaults unless overriding.
+# - VMID must be unique cluster-wide.
+# -----------------------------------------------------------------------------
 
 # Cluster-wide defaults
 vm_defaults:
@@ -10,8 +22,21 @@ vm_defaults:
   onboot: true
   cpu: host
   sockets: 1
-  cores: 2
-  memory: 4096
+  cores: 2 # Units cores per socket, total cores = sockets * cores
+  memory: 4096 # Units MB minimum recommended for PBS
+
+  # Disks
+  # - Storage units is GB, adjust as needed for your environment and PBS requirements.
+  # - Backup is false because PBS cannot backu itself, the VMs are disposable.
+  # - All disks use scsi bus.
+  # - All VMs use virtio networking.
+  # - ZFS pools are created inside guest, not via PVE.
+  # - Retention is managed by PBS, not PVE.
+  # Networks
+  # - Net0 is the primary network interface, net1 is for management or backup network if needed.
+  # - Net1 is the replication network for PBS pbs backup pull from pbs bnsfront to pbs back
+  #
+  # Changing these conventions may require role updates.
 
   disks:
     scsi0: "local-lvm:30,backup=0,discard=on,iothread=1"
@@ -29,6 +54,9 @@ pve_api:
   validate_certs: false
 
 # Proxmox Backup Server VM definitions
+# The vmid value must be unique cluster wide values
+# The node assigns the VMID to a specific host in the cluster.
+# The name is the hostname for the VM.
 pve_pbs_vms:
 - name: pbsfront
   vmid: 109 # define the primary PBS instance on lala100

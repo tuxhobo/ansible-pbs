@@ -1,4 +1,14 @@
 # /roles/pve-vm-create/defaults/main.yml
+# -----------------------------------------------------------------------------
+# pve_vm_defaults
+#
+# Applied to all VMs unless overridden in vm_spec.
+# Use only for values that are truly global.
+# Avoid placing sizing defaults here unless homogeneous.
+# Currently defaults used are from community.general.proxmox_kvm module.
+# Refer to module documentation for valid parameters and values.
+# Add project specific defaults as needed, but avoid environment specific values.
+# -----------------------------------------------------------------------------
 
 ---
 vm_defaults: {}
