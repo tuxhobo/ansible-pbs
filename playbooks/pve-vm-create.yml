@@ -2,16 +2,14 @@
 
 ---
 - name: Create PBS VMs on Proxmox
-  hosts: pve
+  hosts: pve_hosts
   connection: local
   gather_facts: false
-  
 
   tasks:
     - name: Create VMs
       include_role:
         name: pve-vm-create
-      loop: "{{ pve_pbs_vms }}"
-      when: item.node == inventory_hostname
+      loop: "{{ pve_pbs_vms | default([])  }}"
       loop_control:
-        label: "{{ item.name }} on {{ item.node }}"
+        label: "{{ item.name }}"

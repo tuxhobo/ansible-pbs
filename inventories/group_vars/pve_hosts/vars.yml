@@ -52,16 +52,3 @@ pve_api:
   token_id: automation
   token_secret: "{{ vault_pve_api_token }}"
   validate_certs: false
-
-# Proxmox Backup Server VM definitions
-# The vmid value must be unique cluster wide values
-# The node assigns the VMID to a specific host in the cluster.
-# The name is the hostname for the VM.
-pve_pbs_vms:
-- name: pbsfront
-  vmid: 109 # define the primary PBS instance on lala100
-  node: lala100 # Host PVE machine name for VM
-
-- name: pbsback
-  vmid: 159 # define the secondary PBS instance on lala150
-  node: lala150

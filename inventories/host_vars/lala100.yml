@@ -1,0 +1,8 @@
+# ./inventories/host_vars/lala100.yml
+#
+# This file defines host-specific variables for the Proxmox node "lala100".
+# Proxmox Backup Server VM definitions
+pve_pbs_vms:
+- name: pbsfront # The name is the hostname for the VM.
+  vmid: 109 # The vmid value must be unique cluster wide values
+  node: lala100 # The node assigns the VMID to a specific host in the cluster

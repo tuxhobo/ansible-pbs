@@ -1,4 +1,4 @@
-# ./inventories/pbs-bootstrap/host_vars/pbsfront.yml
+# ./inventories/host_vars/pbsfront.yml
 #
 # Configuration values unique to each PBS instance
 hostname: pbsfront
@@ -14,7 +14,17 @@ zfs_pool:
   name: dal_pool
   device: /dev/sdb
 
+# Configuration of the datastore
 pbs_datastore:
   name: lalaland-backups
   pool: dal_pool
   path: /mnt/datastore/dal
+
+pbs_users:
+- name: backup
+  role: DatastoreBackup
+- name: sync
+  role: DatastoreReader
+
+  gotify:
+  app_name: Proxmox Backup Server Front
