@@ -92,9 +92,12 @@ ansible-inventory -i inventories/pve/hosts.yml --list --ask-vault-pass
 ```
 @all:
   |--@ungrouped:
-  |--@pve:
+  |--@pve_hosts:
   |  |--lala100
   |  |--lala150
+  |--@pbs_hosts:
+  |  |--pbsfront
+  |  |--pbsback
 ```
 
 Validate inventory parsing and variable resolution.
@@ -190,13 +193,18 @@ Datacenter->lala100->locak (lala100)-> ISO images->Download from URL
 3. Follow the PBS installer
 
 ### Installer options (authoritative)
-- Install Proxmox Backup Server
-- Target disk: primary VM disk
+- Install Proxmox Backup Server (Graphical)
+- Target disk: primary VM disk (30G)
 - Filesystem: default
-- Locale / keyboard: as documented
+- Location:
+  - Country: United States
+  - Time Zone: America/New_York
+  - Keyboard Layout: U.S. English
 - Network:
-    - Use assigned interface
-    - Static IP per inventory
+  - Hostname: assigned from inventory
+  - IP Address: assigned interface
+  - Gateway: 10.0.0.1
+  - DNS Server: 10.0.0.1
 - Root password: vault-defined value
 - Email: blank
 
@@ -221,9 +229,34 @@ After installation:
 
 ### 5.2 PBS validation
 - Web UI reachable
+  - https://<inventory-ip>:8007
 - Correct hostname
 - Correct IP configuration
 - No dashboard errors
+
+### 5.3 SSH Key Creation
+- On the ansible control host create an ssh key exclusively for ansible
+```bash
+# ssh-keygen -t ed25519 -f ~/.ssh/ansible_pbs_key
+```
+  - skip ssh-keygen step if the key exists already
+
+- Push the key to the PBS server
+```bash
+ssh-copy-id -i ~/.ssh/ansible_pbs_key.pub ansible@<pbs-ip>
+```
+Verify that the key functions:
+```bash
+# ansible <pbs_host> -m ping
+```
+Use the inventory pbs_host names: pbsfront or pbsback
+Expect the following result:
+```bash
+<pbs_host> | SUCCESS => {
+    "changed": false,
+    "ping": "pong"
+}
+```
 
 ### 5.3 Consistency check (recommended)
 Run from Ansible control host
@@ -233,19 +266,6 @@ ansible-playbook playbooks/pve-vm-create.yml --check
 Expected:
 - No changes reported
 Any difference is a stop condition.
-
----
-
-## Optional: Debug rendered VM configuration
-
-If troubleshooting is required:
-```bash
-ansible-playbook playbooks/pve-vm-create.yml \
-  -e pve_vm_debug=true
-```
-
-This prints the rendered disk and network maps
-used by the Proxmox API.
 
 ---
 
