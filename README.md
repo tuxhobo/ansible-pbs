@@ -40,7 +40,7 @@ The applications listed above all perform nightly backups which will now target 
 ---
 
 # 4. Architecture
-
+<img width="881" height="569" alt="image" src="https://github.com/user-attachments/assets/5cb9e7e2-49bd-4634-a604-dd4fc6659222" />
 
 ## 4.1 Physical and virtual layout
 
