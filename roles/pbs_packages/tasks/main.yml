@@ -1,0 +1,6 @@
+# ./roles/pbs_packages/tasks/main.yml
+
+- name: Install required packages
+  apt:
+    name: "{{ pbs_packages | default([]) }}"
+    state: present

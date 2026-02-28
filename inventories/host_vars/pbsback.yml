@@ -1,4 +1,4 @@
-# ./inventories/pbs-bootstrap/host_vars/pbsback.yml
+# ./inventories/host_vars/pbsback.yml
 #
 # Configuration values unique to each PBS instance
 hostname: pbsback
@@ -8,7 +8,7 @@ replication:
   interface: ens19
   address: 172.16.150.5/28
   gateway: 172.16.150.1
-  remote_subnet: 172.16.100.0/28
+  route_subnet: 172.16.100.0/28
 
 zfs_pool:
   name: dfw_pool
@@ -19,10 +19,9 @@ pbs_datastore:
   name: secondary-backups
   pool: dfw_pool
   path: /mnt/datastore/dfw
-
-pbs_users:
-- name: sync
-  role: RemoteSyncOperator
+  pbs_users:
+  - name: sync
+    role: RemoteSyncOperator
 
 gotify:
   app_name: Proxmox Backup Server Back

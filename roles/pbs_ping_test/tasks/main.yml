@@ -1,0 +1,4 @@
+# ./roles/pbs_ping_test/tasks/main.yml
+---
+- name: Test connectivity to PBS host
+  ansible.builtin.ping:

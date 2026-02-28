@@ -42,7 +42,7 @@ It intentionally stops **before**:
 - Playbooks run from the Ansible control host
 - Valid api-token for the pve cluster in the ansible vault
 
-### Steps to create the api-token
+### Steps to create the PVE  api-token
 Do this step  from the pve shell if the token is invalid or deleted.
 The api-token is valid for all nodes in the cluster.
 Create ansible@pam user (may need to delete it from the UI first)
@@ -234,29 +234,7 @@ After installation:
 - Correct IP configuration
 - No dashboard errors
 
-### 5.3 SSH Key Creation
-- On the ansible control host create an ssh key exclusively for ansible
-```bash
-# ssh-keygen -t ed25519 -f ~/.ssh/ansible_pbs_key
-```
-  - skip ssh-keygen step if the key exists already
 
-- Push the key to the PBS server
-```bash
-ssh-copy-id -i ~/.ssh/ansible_pbs_key.pub ansible@<pbs-ip>
-```
-Verify that the key functions:
-```bash
-# ansible <pbs_host> -m ping
-```
-Use the inventory pbs_host names: pbsfront or pbsback
-Expect the following result:
-```bash
-<pbs_host> | SUCCESS => {
-    "changed": false,
-    "ping": "pong"
-}
-```
 
 ### 5.3 Consistency check (recommended)
 Run from Ansible control host

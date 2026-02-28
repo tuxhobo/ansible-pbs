@@ -1,0 +1,67 @@
+#./roles/pbs_zfs_datastore/tasks/main.yml
+#
+---
+# Normalize inventory values into role-local variables
+- name: Normalize datastore variables from inventory
+  set_fact:
+    ds_pool: "{{ pbs_datastore.pool | default(pbs_datastore_pool | default(pbs_datastore_name)) }}"
+    ds_name: "{{ pbs_datastore.name | default(pbs_datastore_name | default(ds_pool)) }}"
+    ds_path: "{{ pbs_datastore.path | default(pbs_datastore_path | default(pbs_datastore_mount | default('/var/lib/proxmox-backup'))) }}"
+    zfs_devices: "{{ zfs_pool.devices | default(zfs_pool.device | default(zfs_pool_disks | default([]))) }}"
+    zfs_autotrim: "{{ zfs_pool.autotrim | default(false) | bool }}"
+    zfs_autotrim_flag: "{{ 'on' if zfs_autotrim else 'off' }}"
+    zfs_ashift: "{{ (zfs_pool.ashift | default(12)) | int }}"
+
+# 1. Idempotent ZFS Pool Creation
+- name: Ensure ZFS devices are defined
+  fail:
+    msg: "No ZFS devices provided for pool {{ ds_pool }}; set zfs_pool.devices in inventory."
+  when: (zfs_devices | default([]) | length) == 0
+
+- name: Create ZFS pool
+  community.general.zpool:
+    name: "{{ ds_pool }}"
+    vdevs:
+      - type: stripe
+        disks: "{{ zfs_devices }}"
+    pool_properties:
+      ashift: "{{ zfs_ashift }}"
+    state: present
+
+# 2. Idempotent ZFS Property Management
+- name: Check if 'autotrim' ZFS property is supported
+  command: zfs get -H autotrim {{ ds_pool }}
+  register: zfs_autotrim_check
+  changed_when: false
+  failed_when: false
+
+- name: Ensure compression is enabled
+  community.general.zfs:
+    name: "{{ ds_pool }}"
+    state: present
+    extra_zfs_properties:
+      compression: "on"
+
+- name: Enable autotrim if supported
+  community.general.zfs:
+    name: "{{ ds_pool }}"
+    state: present
+    extra_zfs_properties:
+      autotrim: "{{ zfs_autotrim_flag }}"
+  when: zfs_autotrim_check.rc == 0
+
+# 3. Idempotent PBS Registration
+- name: Get current PBS datastore registry
+  command: proxmox-backup-manager datastore list --output-format json
+  register: pbs_ds_list
+  changed_when: false
+  failed_when: false
+
+- name: Register PBS datastore
+  command: >
+    proxmox-backup-manager datastore create
+    {{ ds_name }}
+    {{ ds_path }}
+  when:
+    - pbs_ds_list.rc == 0
+    - ds_name not in (pbs_ds_list.stdout | from_json | map(attribute='store') | list)

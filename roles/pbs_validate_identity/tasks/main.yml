@@ -1,0 +1,23 @@
+# ./roles/pbs_validate_identity/tasks/main.yml
+---
+- name: Capture Identity Information
+  shell: |
+    echo "$(timedatectl show -p Timezone --value)"
+    echo "$(hostname -d)"
+    echo "$(hostname -f)"
+  register: identity_check
+  changed_when: false
+
+- name: Validate System Identity
+  assert:
+    that:
+      - identity_check.stdout_lines[0] == timezone
+      - identity_check.stdout_lines[1] == domain_name
+      - identity_check.stdout_lines[2] == fqdn
+    fail_msg: >
+      Identity mismatch detected!
+      TZ: {{ identity_check.stdout_lines[0] }} vs {{ timezone }}
+      Domain: {{ identity_check.stdout_lines[1] }} vs {{ domain_name }}
+      FQDN: {{ identity_check.stdout_lines[2] }} vs {{ fqdn }}
+    success_msg: "All identity checks passed."
+

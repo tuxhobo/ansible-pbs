@@ -1,0 +1,10 @@
+# ./roles/pbs_hardening/handlers/main.yml
+#
+- name: restart ssh
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - ssh
+    - ssh.socket
+  ignore_errors: yes

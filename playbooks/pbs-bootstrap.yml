@@ -1,0 +1,26 @@
+#./playbook/pbs-bootstrap.yml
+#
+---
+- name: Bootstrap Proxmox Backup Server
+  hosts: pbs_hosts
+  gather_facts: true
+  become: true
+
+  roles:
+    - role: pbs_ping_test
+      tags: ping
+
+    - role: pbs_validate_identity
+      tags: identity
+
+    - role: pbs_update
+      tags: update
+
+    - role: pbs_hardening
+      tags: hardening
+
+    - role: pbs_packages
+      tags: packages
+
+    - role: pbs_zfs_datastore
+      tags: datastore

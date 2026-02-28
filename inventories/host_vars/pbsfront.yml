@@ -8,23 +8,23 @@ replication:
   interface: ens19
   address: 172.16.100.5/28
   gateway: 172.16.100.1
-  remote_subnet: 172.16.150.0/28
+  route_subnet: 172.16.150.0/28
 
 zfs_pool:
   name: dal_pool
   device: /dev/sdb
+  autotrim: on
 
 # Configuration of the datastore
 pbs_datastore:
   name: lalaland-backups
   pool: dal_pool
   path: /mnt/datastore/dal
+  pbs_users:
+  - name: backup
+    role: DatastoreBackup
+  - name: sync
+    role: DatastoreReader
 
-pbs_users:
-- name: backup
-  role: DatastoreBackup
-- name: sync
-  role: DatastoreReader
-
-  gotify:
+gotify:
   app_name: Proxmox Backup Server Front

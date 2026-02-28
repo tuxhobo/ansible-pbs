@@ -1,0 +1,5 @@
+# ./roles/pbs_update/handlers/main.yml
+- name: Restart proxy
+  service:
+    name: proxmox-backup-proxy
+    state: restarted

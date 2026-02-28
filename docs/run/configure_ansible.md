@@ -2,11 +2,12 @@
 
 ```yaml
 [defaults]
+remote_user = ansible
+private_key_file = /home/ted/.ssh/ansible_pbs_key
 inventory = inventories
 roles_path = roles
 collections_path = ~/.ansible/collections:/usr/share/ansible/collections
 
-#remote_user = root
 host_key_checking = False
 retry_files_enabled = False
 stdout_callback = yaml
