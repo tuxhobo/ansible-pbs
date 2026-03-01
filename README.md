@@ -5,6 +5,41 @@ Previous backups were written directly from Proxmox VE to a TrueNAS‑hosted NFS
 This design replaces NFS‑based backups with Proxmox Backup Server (PBS) to move failure handling from filesystem semantics to backup semantics.
 
 ---
+
+## 1.1 Why Proxmox Backup Server (PBS) Instead of NFS
+
+Using NFS as a Proxmox backup target introduces failure modes that Proxmox Backup Server is explicitly designed to avoid.
+NFS-backed backups rely on:
+- A remote filesystem
+- Client-side locking
+- Best-effort write semantics
+- Minimal end-to-end verification
+
+When an NFS interruption occurs during backup, Proxmox may leave VMs or containers locked and skip subsequent backups until manual intervention.
+
+Proxmox Backup Server provides:
+- Chunk-based, content-addressed storage
+- End-to-end checksumming
+- Atomic snapshot handling
+- Built-in verification and garbage collection
+- Network interruption tolerance without guest lock persistence
+
+PBS moves failure handling from “filesystem semantics” to “backup semantics,” which is more reliable and observable. 
+
+The negative arguments against using PBS for backup:
+- Complexity of additional virtual appliance to manage just PVE backups
+	- The PBS VMs consume, RAM, Disk and CPU resources of the PVE host x 2
+- Separate backup strategies for TrueNAS ZFS backups and PVE backups
+	- TrueNAS/ZFS uses snapsshots and replication while PBS is purpose built for PVE backups
+- By design Proxmox does not provide a method to backup hosts
+	- Requires scripting to recover the PVE hosts with subsiquent recovery of the PVE backups
+
+The last point about recovering a PVE host is not a new problem. Virtualizing TrueNAS has simplfied its recovery but the PVE host recovery relies on a text based recovery procedure to stand up a replacement PVE host.
+ 
+My Home Lab has the resources available within existing servers to support deployment of two PBS VM instances on separate servers. The advantages of PBS seem to outweigh the NFS solution. Having said this, the home lab can evolve again in the future should a better solution become available.
+
+---
+
 # 2. Design goals
 
 - Eliminate NFS as a backup target for Proxmox VE
@@ -13,11 +48,11 @@ This design replaces NFS‑based backups with Proxmox Backup Server (PBS) to mov
 - Maintain a second independent copy of backups
 - Keep the design simple enough for a home lab
 - Ansible automation assists Proxmox Backup Server installation
-- Virtulize the solution, use existing Proxmox hosts within Home Lab cluster 
+- Virtualize the solution, use existing Proxmox hosts within Home Lab cluster 
 
 ---
 
-# 3 Existing Home Lab
+# 3. Existing Home Lab
 One architecture objective I follow in my Home Lab is to maximize virtualization and minimize additional equipment. This objective leads to interesting architecture decisions that a commercial data center with a fleet of servers would not face. A side effect for me is that I get to learn more about the internals of the software packages deployed!
 
 ##  3.1 Existing cluster nodes
@@ -57,7 +92,7 @@ Each PBS instance is deployed as a virtual machine with:
 - HDD scsi0 30G ext4 root file system and boot disk
 - HDD scsi1 400G zfs pbs datastore
 
-Both dusk allocations are from the local-lvm ssd of the PVE host.
+Both disk allocations are from the local-lvm ssd of the PVE host.
 
 ## 4.3 Network design
 
@@ -65,7 +100,7 @@ PBS traffic is split logically:
 -  **Management network (vmbr0)** – UI access, administration
 - **Replication network (vmbr1)** – PBS sync traffic
 
-The replication network is a dedicated point to point link between PVE hosts  lala100 and lala150. This link is a bond of 3 x 1G ethernet ports wired directlt between machines without switch fabric between. 
+The replication network is a dedicated point to point link between PVE hosts  lala100 and lala150. This link is a bond of 3 x 1G ethernet ports wired directly between machines without switch fabric between. 
 
 PBS‑to‑PBS sync uses a dedicated replication network to:
 - Avoid saturating the management LAN
@@ -152,44 +187,9 @@ Separating the root and data disks allows PBS to keep running even when the data
 
 ---
 
+# 7. ZFS justification
 
-# 7. Why Proxmox Backup Server (PBS) Instead of NFS
-
-Using NFS as a Proxmox backup target introduces failure modes that Proxmox Backup Server is explicitly designed to avoid.
-NFS-backed backups rely on:
-- A remote filesystem
-- Client-side locking
-- Best-effort write semantics
-- Minimal end-to-end verification
-
-When an NFS interruption occurs during backup, Proxmox may leave VMs or containers locked and skip subsequent backups until manual intervention.
-
-Proxmox Backup Server provides:
-- Chunk-based, content-addressed storage
-- End-to-end checksumming
-- Atomic snapshot handling
-- Built-in verification and garbage collection
-- Network interruption tolerance without guest lock persistence
-
-PBS moves failure handling from “filesystem semantics” to “backup semantics,” which is more reliable and observable. 
-
-The negative arguments against using PBS for backup:
-- Complexity of additional virtual appliance to manage just PVE backups
-	- The PBS VMs consume, RAM, Disk and CPU resources of the PVE host x 2
-- Separate backup strategies for TrueNAS ZFS backups and PVE backups
-	- TrueNAS/ZFS uses snapsshots and replication while PBS is purpose built for PVE backups
-- By design Proxmox does not provide a method to backup hosts
-	- Requires scripting to recover the PVE hosts with subsiquent recovery of the PVE backups
-
-The last point about recovering a PVE host is not a new problem. Virtualizing TrueNAS has simplfied its recovery but the PVE host recovery relies on a text based recovery procedure to stand up a replacement PVE host.
- 
-My Home Lab has the resources available within existing servers to support deployment of two PBS VM instances on separate servers. The advantages of PBS seem to outweigh the NFS solution. Having said this, the home lab can evolve again in the future should a better solution become available.
-
----
-
-# 8. ZFS justification
-
-ZFS is used for the PBS datastore disk. It introduces some complexity because the boot disk and data disks are separate devices. The benifits outweigh the small inclreas in complexity.
+ZFS is used for the PBS datastore disk. It introduces some complexity because the boot disk and data disks are separate devices. The benefits outweigh the small increase in complexity.
 
 What ZFS provides:
 
@@ -207,42 +207,41 @@ Note that data protection is further enhanced at the hardware level because the 
 
 --- 
 
-# 9. Scheduling and housekeeping
-
-## 9.1 Verification
+# 8. Scheduling and housekeeping
+## 8.1 Verification
 
 * Schedule: **Saturday 18:15**
 * Scope: Entire datastore
 * Skip already‑verified backups
 * Re‑verify after 30 days
 
-## 9.2 Garbage collection
+## 8.2 Garbage collection
 
 * Schedule: **Sunday 18:15**
 * Runs after verification to avoid I/O contention
 
-## 9.3 Sync
+## 8.3 Sync
 
-* Direction: The backup or secondary PNS server is `pbsback` pulls from  the primary pbs server `pbsfront`
+* Direction: The backup or secondary PBS server is `pbsback` pulls from  the primary pbs server `pbsfront`
 * Model: Pull‑based
 * Schedule: **2am Daily**
 
-## 9.4 Prune
+## 8.4 Prune
 * Both primary and secondary servers prune on the same shcedule
 * Schedule: **Monday 2pm**
 
 ---
 
-# 10. Trust and credentials
+# 9. Trust and credentials
 
-## 10.1 Users
+## 9.1 Users
 
 | User         | Purpose                   |
 | ------------ | ------------------------- |
 | `backup@pbs` | Proxmox VE → PBS backups  |
 | `sync@pbs`   | PBS → PBS synchronization |
 
-## 10.2 Credential handling plan
+## 9.2 Credential handling plan
 
 * Credentials stored in Ansible Vault
 * No interactive password reuse
@@ -253,7 +252,7 @@ This is sufficient for a single‑admin home lab.
 
 ---
 
-# 11. Run Books
+# 10. Run Books
 I'm an engineer, not an IT professional. I use this home lab as a learning tool, and the implementation details of any deployment inevitably fade over time. These run books are written for future me — someone who needs to rebuild this system without remembering how it was originally put together.
 
 *Run books:*

@@ -77,6 +77,26 @@ If the output is empty {"data": {}}: The token authenticated, but it has no assi
 If the output is 403: The token secret is likely incorrect or the token has been disabled.
 The token and assigned roles are correct if the data shows the list of resource access allowed.
 
+
+To avoid typing the vault password on every playbook run, store it in a file outside the repo:
+
+```bash
+echo "your-vault-password" > ~/.ansible_vault_pass
+chmod 600 ~/.ansible_vault_pass
+```
+
+Add to `ansible.cfg` under `[defaults]`:
+
+```ini
+vault_password_file = ~/.ansible_vault_pass
+```
+
+Confirm `~/.ansible_vault_pass` is excluded from git:
+
+```bash
+grep ansible_vault_pass .gitignore || echo "ansible_vault_pass" >> .gitignore
+```
+
 ## Step 1: Inventory validation from ansible host
 
 Validate inventory graph:
