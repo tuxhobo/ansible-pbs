@@ -9,14 +9,16 @@
     ds_path: "{{ pbs_datastore.path | default(pbs_datastore_path | default(pbs_datastore_mount | default('/var/lib/proxmox-backup'))) }}"
     zfs_devices: "{{ zfs_pool.devices | default(zfs_pool.device | default(zfs_pool_disks | default([]))) }}"
     zfs_autotrim: "{{ zfs_pool.autotrim | default(false) | bool }}"
-    zfs_autotrim_flag: "{{ 'on' if zfs_autotrim else 'off' }}"
+    zfs_autotrim_flag: "{{ 'on' if zfs_pool.autotrim else 'off' }}"
     zfs_ashift: "{{ (zfs_pool.ashift | default(12)) | int }}"
 
 # 1. Idempotent ZFS Pool Creation
 - name: Ensure ZFS devices are defined
-  fail:
-    msg: "No ZFS devices provided for pool {{ ds_pool }}; set zfs_pool.devices in inventory."
-  when: (zfs_devices | default([]) | length) == 0
+  assert:
+    that:
+      - zfs_devices | length > 0
+    fail_msg: "No ZFS devices provided for pool {{ ds_pool }}; set zfs_pool.devices in inventory."
+    success_msg: "ZFS devices defined: {{ zfs_devices }}"
 
 - name: Create ZFS pool
   community.general.zpool:
@@ -26,31 +28,17 @@
         disks: "{{ zfs_devices }}"
     pool_properties:
       ashift: "{{ zfs_ashift }}"
-    state: present
-
-# 2. Idempotent ZFS Property Management
-- name: Check if 'autotrim' ZFS property is supported
-  command: zfs get -H autotrim {{ ds_pool }}
-  register: zfs_autotrim_check
-  changed_when: false
-  failed_when: false
-
-- name: Ensure compression is enabled
-  community.general.zfs:
-    name: "{{ ds_pool }}"
-    state: present
-    extra_zfs_properties:
+      # autotrim: "{{ zfs_autotrim_flag }}"  # not supported by Ansible module, set via command below
+    filesystem_properties:
       compression: "on"
-
-- name: Enable autotrim if supported
-  community.general.zfs:
-    name: "{{ ds_pool }}"
     state: present
-    extra_zfs_properties:
-      autotrim: "{{ zfs_autotrim_flag }}"
-  when: zfs_autotrim_check.rc == 0
 
-# 3. Idempotent PBS Registration
+- name: Set autotrim on ZFS pool
+  command: zpool set autotrim={{ zfs_autotrim_flag }} {{ ds_pool }}
+  changed_when: false
+  when: zfs_autotrim | bool
+
+# 2. Idempotent PBS Registration
 - name: Get current PBS datastore registry
   command: proxmox-backup-manager datastore list --output-format json
   register: pbs_ds_list
@@ -64,4 +52,11 @@
     {{ ds_path }}
   when:
     - pbs_ds_list.rc == 0
-    - ds_name not in (pbs_ds_list.stdout | from_json | map(attribute='store') | list)
+    - ds_name not in (pbs_ds_list.stdout | from_json | map(attribute='name') | list)
+  changed_when: true
+  register: pbs_ds_create
+
+- name: Datastore status
+  debug:
+    msg: "{{ 'Datastore ' + ds_name + ' created.' if pbs_ds_create is changed else 'Datastore ' + ds_name + ' already exists, skipping create.' }}"
+    

@@ -24,3 +24,9 @@
 
     - role: pbs_zfs_datastore
       tags: datastore
+
+    - role: pbs_replication_net
+      tags: replication_net
+
+    - role: pbs_replication_validate
+      tags: replication_validate

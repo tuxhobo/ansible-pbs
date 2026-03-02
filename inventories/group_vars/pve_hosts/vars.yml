@@ -41,9 +41,6 @@ vm_defaults:
   disks:
     scsi0: "local-lvm:30,backup=0,discard=on,iothread=1"
     scsi1: "local-lvm:400,backup=0,discard=on,iothread=1"
-  networks:
-    net0: "virtio,bridge=vmbr0,firewall=1"
-    net1: "virtio,bridge=vmbr1,firewall=1"
 
 # Proxmox API interface (non-secret)
 pve_api:

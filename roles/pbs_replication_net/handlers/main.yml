@@ -1,0 +1,5 @@
+---
+# roles/pbs_replication_net/handlers/main.yml
+
+- name: reload replication interface
+  command: ifreload -a

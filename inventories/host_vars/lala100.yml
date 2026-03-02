@@ -6,3 +6,6 @@ pve_pbs_vms:
 - name: pbsfront # The name is the hostname for the VM.
   vmid: 109 # The vmid value must be unique cluster wide values
   node: lala100 # The node assigns the VMID to a specific host in the cluster
+  networks:
+    net0: "virtio,bridge=vmbr0,firewall=1"
+    net1: "virtio={{ hostvars['pbsfront']['replication']['mac'] }},bridge=vmbr1,firewall=1"

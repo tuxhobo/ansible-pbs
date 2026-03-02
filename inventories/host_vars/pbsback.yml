@@ -5,14 +5,18 @@ hostname: pbsback
 fqdn: pbsback.lalalandus.com
 
 replication:
-  interface: ens19
+  mac: "bc:24:11:11:2e:36"
   address: 172.16.150.5/28
   gateway: 172.16.150.1
   route_subnet: 172.16.100.0/28
+  # IP of the remote PVE host gateway on the replication network 
+  remote_ip: 172.16.100.1 #used only for validation
 
 zfs_pool:
   name: dfw_pool
   device: /dev/sdb
+  autotrim: on
+  ashift: 12
 
 # Configuration of the datastore
 pbs_datastore:

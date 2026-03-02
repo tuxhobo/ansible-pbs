@@ -1,0 +1,82 @@
+---
+# roles/pbs_replication_net/tasks/main.yml
+#
+# Configures the replication network interface on a PBS VM.
+# Discovers the interface name from the MAC address defined in inventory.
+# Appends static IP config to /etc/network/interfaces and brings the interface up.
+#
+# Required inventory vars (per host_vars):
+#   replication.mac         - MAC address of the replication NIC
+#   replication.interface   - Expected interface name (used for idempotency check)
+#   replication.address     - IP address in CIDR notation (e.g. 172.16.100.5/28)
+#   replication.gateway     - Gateway for the replication subnet
+#   replication.route_subnet - Remote PBS replication subnet to route via gateway
+
+- name: Assert required replication vars are defined
+  assert:
+    that:
+      - replication is defined
+      - replication.mac is defined
+      - replication.address is defined
+      - replication.gateway is defined
+      - replication.route_subnet is defined
+    fail_msg: "Missing one or more required replication vars in host_vars"
+
+- name: Gather interface facts
+  ansible.builtin.setup:
+    gather_subset:
+      - network
+
+- name: Find interface name matching replication MAC address
+  set_fact:
+    rep_iface: >-
+      {{
+        ansible_interfaces
+        | map('regex_replace', '^', 'ansible_')
+        | map('extract', hostvars[inventory_hostname])
+        | selectattr('macaddress', 'defined')
+        | selectattr('macaddress', 'equalto', replication.mac | lower)
+        | map(attribute='device')
+        | list
+        | first
+      }}
+
+- name: Fail if no interface matches the replication MAC
+  fail:
+    msg: "No interface found with MAC {{ replication.mac }} on {{ inventory_hostname }}"
+  when: rep_iface is not defined or rep_iface == ''
+
+- name: Report discovered interface
+  debug:
+    msg: "Replication interface: {{ rep_iface }} (MAC {{ replication.mac }})"
+
+- name: Check if replication interface block already exists in /etc/network/interfaces
+  command: grep -qF "auto {{ rep_iface }}" /etc/network/interfaces
+  register: iface_exists
+  changed_when: false
+  failed_when: false
+
+- name: Append replication interface block to /etc/network/interfaces
+  blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED - replication interface {{ rep_iface }}"
+    block: |
+      auto {{ rep_iface }}
+      iface {{ rep_iface }} inet static
+          address {{ replication.address }}
+          # replication network
+          post-up ip route add {{ replication.route_subnet }} via {{ replication.gateway }} dev {{ rep_iface }}
+          post-down ip route del {{ replication.route_subnet }} via {{ replication.gateway }} dev {{ rep_iface }}
+    insertafter: EOF
+  when: iface_exists.rc != 0
+  notify: reload replication interface
+
+- name: Force interface reload if config was already present but interface is down
+  command: ip link show {{ rep_iface }}
+  register: iface_state
+  changed_when: false
+
+- name: Bring up replication interface if it is DOWN
+  command: ifup {{ rep_iface }}
+  when: "'DOWN' in iface_state.stdout"
+  notify: reload replication interface

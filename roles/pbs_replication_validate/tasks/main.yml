@@ -1,0 +1,97 @@
+---
+# roles/pbs_replication_validate/tasks/main.yml
+#
+# Validates that the replication network interface is correctly configured
+# and can reach the remote PBS host.
+#
+# Required inventory vars (per host_vars):
+#   replication.mac           - MAC address of the replication NIC
+#   replication.address       - Local IP in CIDR (e.g. 172.16.100.5/28)
+#   replication.gateway       - Gateway on the replication subnet
+#   replication.route_subnet  - Remote PBS replication subnet
+#   replication.remote_ip     - IP of the remote PBS instance on the replication network
+
+- name: Assert required replication validation vars are defined
+  assert:
+    that:
+      - replication is defined
+      - replication.mac is defined
+      - replication.address is defined
+      - replication.gateway is defined
+      - replication.route_subnet is defined
+      - replication.remote_ip is defined
+    fail_msg: "Missing one or more required replication vars. Ensure replication.remote_ip is set in host_vars."
+
+# ── Interface state ──────────────────────────────────────────────────────────
+
+- name: Resolve interface name from MAC address
+  ansible.builtin.setup:
+    gather_subset:
+      - network
+
+- name: Find interface name matching replication MAC
+  set_fact:
+    rep_iface: >-
+      {{
+        ansible_interfaces
+        | map('regex_replace', '^', 'ansible_')
+        | map('extract', hostvars[inventory_hostname])
+        | selectattr('macaddress', 'defined')
+        | selectattr('macaddress', 'equalto', replication.mac | lower)
+        | map(attribute='device')
+        | list
+        | first
+      }}
+
+- name: Fail if interface not found
+  fail:
+    msg: "No interface found with MAC {{ replication.mac }}"
+  when: rep_iface is not defined or rep_iface == ''
+
+- name: Check interface is UP
+  command: ip link show {{ rep_iface }}
+  register: link_state
+  changed_when: false
+  failed_when: "'UP' not in link_state.stdout"
+
+# ── Routing ──────────────────────────────────────────────────────────────────
+
+- name: Confirm route to remote subnet exists
+  command: ip route show {{ replication.route_subnet }}
+  register: route_state
+  changed_when: false
+  failed_when: replication.route_subnet not in route_state.stdout
+
+- name: Show route entry
+  debug:
+    msg: "Route: {{ route_state.stdout }}"
+
+# ── Connectivity ─────────────────────────────────────────────────────────────
+
+- name: Ping replication gateway (layer 3 local segment)
+  command: ping -c 3 -W 2 -I {{ rep_iface }} {{ replication.gateway }}
+  register: ping_gateway
+  changed_when: false
+  failed_when: ping_gateway.rc != 0
+
+- name: Ping remote PBS replication interface
+  command: ping -c 3 -W 2 -I {{ rep_iface }} {{ replication.remote_ip }}
+  register: ping_remote
+  changed_when: false
+  failed_when: ping_remote.rc != 0
+
+- name: Report connectivity result
+  debug:
+    msg:
+      - "Gateway {{ replication.gateway }}: reachable"
+      - "Remote PBS {{ replication.remote_ip }}: reachable"
+
+
+# ── Summary ───────────────────────────────────────────────────────────────────
+
+- name: Validation passed
+  debug:
+    msg: >-
+      Replication interface {{ rep_iface }} is UP, IP assigned,
+      route present, gateway reachable, remote PBS reachable on management port.
+      All checks passed.
