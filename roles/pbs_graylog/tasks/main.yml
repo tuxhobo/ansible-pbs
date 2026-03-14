@@ -1,0 +1,25 @@
+# roles/pbs_graylog/tasks/main.yml
+---
+- name: Verify rsyslog is installed
+  ansible.builtin.command: dpkg-query -W -f='${Status}' rsyslog
+  register: rsyslog_status
+  changed_when: false
+  failed_when: rsyslog_status.rc != 0 or 'install ok installed' not in rsyslog_status.stdout
+
+- name: Deploy graylog rsyslog config
+  ansible.builtin.template:
+    src: 60-graylog.conf.j2
+    dest: /etc/rsyslog.d/60-graylog.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart rsyslog
+
+- name: Flush handlers to apply config before sending test message
+  ansible.builtin.meta: flush_handlers
+
+- name: Send test message to Graylog
+  ansible.builtin.command: >
+    logger -t pbs-ansible-role
+    "Graylog rsyslog config applied on {{ inventory_hostname }} by Ansible. Target: {{ graylog.bind_address }}:{{ graylog.port }}"
+  changed_when: false

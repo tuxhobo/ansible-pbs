@@ -1,0 +1,14 @@
+# /etc/rsyslog.d/60-graylog.conf
+# Managed by Ansible - do not edit manually
+# Target: {{ graylog.bind_address }}:{{ graylog.port }} ({{ graylog.protocol | upper }})
+
+template(name="GraylogFormat" type="string"
+         string="<%PRI%>%timestamp% %hostname% %app-name%: %msg%\n")
+
+*.* action(
+    type="omfwd"
+    target="{{ graylog.bind_address }}"
+    port="{{ graylog.port }}"
+    protocol="{{ graylog.protocol }}"
+    template="GraylogFormat"
+)

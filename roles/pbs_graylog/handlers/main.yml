@@ -1,0 +1,6 @@
+# roles/pbs_graylog/handlers/main.yml
+---
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted

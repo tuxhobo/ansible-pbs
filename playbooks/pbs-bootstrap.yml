@@ -30,3 +30,6 @@
 
     - role: pbs_replication_validate
       tags: replication_validate
+
+    - role: pbs_graylog
+      tags: graylog

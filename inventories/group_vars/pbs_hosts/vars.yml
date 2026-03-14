@@ -1,7 +1,7 @@
 # ./inventories/group_vars/pbs_hosts/vars.yml
 #
 # Basic configuration parameters common to both PBS instances
-pbs-packages:
+pbs_packages:
 - rsyslog
 - zfsutils-linux
 
@@ -14,4 +14,4 @@ graylog:
   type: syslog
   port: 514
   bind_address: 10.0.0.104
-  protocol: tcp
+  protocol: udp
