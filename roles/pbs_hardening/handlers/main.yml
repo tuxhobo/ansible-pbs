@@ -1,10 +1,6 @@
 # ./roles/pbs_hardening/handlers/main.yml
 #
 - name: restart ssh
-  service:
-    name: "{{ item }}"
+  ansible.builtin.systemd:
+    name: ssh
     state: restarted
-  loop:
-    - ssh
-    - ssh.socket
-  ignore_errors: yes

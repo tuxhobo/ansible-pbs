@@ -28,7 +28,7 @@ This run book covers:
     - Configure Graylog reporting
 - Post run validation of PBS configuration
 
-This run book intentionally stops before pbs servuce configuration 
+This run book intentionally stops before pbs service configuration 
 ---
 
 ## Preconditions
@@ -36,9 +36,14 @@ This run book intentionally stops before pbs servuce configuration
 The procedures described in pve-vm-create.md are complete without error.
 
 # Manual PBS configuration steps
-Prepare for running playbook pbs-bootstrap.yml
+Prepare for running playbook pbs-bootstrap.yml:
+- Launch PBS Web UI 
+  - https://\<inventory-ip\>:8007
 
-## Add No-Subscription repository
+Login with the User name and Password assigned during installation.
+Ignore the no-subscription warning for now.
+
+## Step 1: Add No-Subscription repository
 
 From the PBS UI
 Administration->Repositories  
@@ -54,7 +59,18 @@ Go to the PBS shell as root user and run upgrade:
 root@host:~# apt update && apt full-upgrade
 ```
 
-## SSH Key Creation
+## Step 2: Install sudo package
+```bash
+# apt update && apt install sudo -y
+```
+## Step 3: Add ansible user
+
+```bash
+    adduser ansible
+    usermod -aG sudo ansible
+```
+
+## Step 3: SSH Key Creation
 - On the ansible control host create an ssh key exclusively for ansible
 ```bash
 # ssh-keygen -t ed25519 -f ~/.ssh/ansible_pbs_key
@@ -76,13 +92,125 @@ Expect the following result:
     "changed": false,
     "ping": "pong"
 }
-
 ```
 
-## Install sudo package
+Close web browser to pbs instance.
 
+## Step 4: Execute pbs_bootstrap
+From the ansible host
+### Run for all PBS VMs
 ```bash
-# apt update && apt install sudo -y
+ansible-playbook playbooks/pbs_bootstrap.yml
 ```
+Run for a single VM (recomended)
+```bash
+ansible-playbook playbooks/pbs-bootstrap.yml --limit pbsback
+```
+### Expected result 
+All tasks complete with OK
+Some tasks skipped
+No failed tasks.
+
+Stop and investigate failures.
+
+
+
+## Step 5: Verify result
+Manually verify configuration
+
+1. Check ansible user hardning
+
+From the ansible host:
+```bash
+# ssh ansible@<pbs_ip_address>
+```
+Expected result:
+```bash
+ansible@<pbs_ip_address>: Permission denied (publickey).
+```
+
+2. Check PBS configuration
+
+- Launch PBS Web UI 
+  - https://\<inventory-ip\>:8007
+
+Login with the User name and Password assigned during installation.
+
+- The no-subscription  warning should not appear
+- Storage/Disks shows ZFS pool 
+- Datastore name exists as defined in inventory
+
+Verify operation of replication network
+From pbs Shell
+Ping of both gateways sorks from both PBS instances
+```bash
+# ping 172.16.100.1
+```
+```bash
+# ping 172.16.150.1
+```
+Both of the above ping results must succeed
+
+Exit the PBS UI
+
+Login to the Graylog UI
+- Filter for pbsfront or pbsback in input messages.
+- Find messages from both.
+- Error if no input messages
+
+
+
+### Step 6:  Consistency check (recommended)
+Run from Ansible control host
+```bash
+ansible-playbook playbooks/pbs-bootstrap.yml
+```
+Expected:
+- No changes reported
+Any difference is a stop condition.
+
+Above assumes that both PBS instances are complete. Use --limit pbsfront or pbsback.
+
+---
+
+## Stop point
+At this stage:
+- VM exists
+- PBS is installed
+- Replication network is operating
+- User hardning is complete
+- Graylog reporting is operating 
+- No services configured
+
+When this run book is complete without error then
+proceed to the pbs-services run book
+
+---
+
+## Notes
+
+- This run book is authoritative
+- Manual steps are intentional
+- Do not “optimize” without updating this document
+- Update run book as procedures evolve 
+    - Ansible syntax
+    - New PBS procedures with upgrade
+
+
+
+Next is for the services run book
+
+## Step 6 Manual configuration Gotify
+
+Login to the Gotify application
+
+- Click CREATE APPLICATION
+    - pbsfront-109 - PBS instance on lala100
+    - pbsback-159 - PBS instance on lala150
+
+
+
+
+
 
 
