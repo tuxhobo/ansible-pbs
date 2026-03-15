@@ -1,7 +1,17 @@
-# ./inventories/group_vars/pbs_hosts /all.yml
+# ./inventories/group_vars/pbs_hosts/all.yml
 #
 # domain and loaction information
 ansible_python_interpreter: /usr/bin/python3
 
 timezone: America/New_York
 domain_name: lalalandus.com
+
+pbs_schedule:
+  verify: "sat 18:15"
+  gc: "sun 18:15"
+  prune: "mon 14:00"
+
+pbs_retention:
+  keep_daily: 7
+  keep_weekly: 4
+  keep_monthly: 3

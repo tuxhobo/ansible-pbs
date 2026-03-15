@@ -1,0 +1,33 @@
+# ./roles/pbs_services/tasks/users.yml
+---
+- name: Get existing PBS users
+  command: proxmox-backup-manager user list
+  register: existing_users
+  changed_when: false
+  become: true
+
+- name: Create PBS user if not present
+  command: >
+    proxmox-backup-manager user create {{ item.name }}@pbs --password {{ vault_pbs_user_password }} --enable true
+  loop: "{{ pbs_datastore.pbs_users }}"
+  loop_control:
+    label: "{{ item.name }}@pbs"
+  when: "(item.name + '@pbs') not in existing_users.stdout"
+  changed_when: true
+  no_log: false
+  become: true
+
+- name: Get existing datastore ACLs
+  command: proxmox-backup-manager acl list
+  register: existing_acls
+  changed_when: false
+  become: true
+
+- name: Set datastore ACL for PBS users
+  command: >
+    proxmox-backup-manager acl update /datastore/{{ pbs_datastore.name }} {{ item.role }} --auth-id {{ item.name }}@pbs
+  loop: "{{ pbs_datastore.pbs_users }}"
+  loop_control:
+    label: "{{ item.name }}@pbs -> {{ item.role }}"
+  when: "(item.name + '@pbs') not in existing_acls.stdout"
+  become: true

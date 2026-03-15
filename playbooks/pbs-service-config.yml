@@ -1,0 +1,11 @@
+# ./playbooks/pbs-service-config.yml
+
+---
+- name: Configure PBS Services
+  hosts: pbs_hosts
+  become: true
+  gather_facts: true
+
+  roles:
+    - pbs_services
+#    - pbs_notifications

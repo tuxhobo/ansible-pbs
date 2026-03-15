@@ -14,8 +14,9 @@ replication:
 zfs_pool:
   name: dal_pool
   device: /dev/sdb
-  autotrim: on
+  autotrim: "on"
   ashift: 12
+  compression: "on"
 
 # Configuration of the datastore
 pbs_datastore:
@@ -29,4 +30,8 @@ pbs_datastore:
     role: DatastoreReader
 
 gotify:
-  app_name: Proxmox Backup Server Front
+  app_name: Proxmox Backup Server Front - 109
+  token: "{{ vault_gotify_token_pbsfront }}"
+
+pbs_sync:
+  enabled: false

@@ -1,0 +1,10 @@
+# ./roles/pbs-services/tasks/main.yml
+
+---
+- import_tasks: users.yml
+#- import_tasks: datastore.yml
+#- import_tasks: remotes.yml
+#- import_tasks: sync.yml
+#- import_tasks: verify.yml
+#- import_tasks: prune.yml
+#- import_tasks: gc.yml

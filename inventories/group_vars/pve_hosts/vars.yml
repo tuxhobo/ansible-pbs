@@ -1,4 +1,4 @@
-# ./inventories/pve/group_vars/pve/vars.yml
+# ./inventories/group_vars/pve_hosts/vars.yml
 #
 # -----------------------------------------------------------------------------
 # Proxmox VM Inventory

@@ -15,8 +15,9 @@ replication:
 zfs_pool:
   name: dfw_pool
   device: /dev/sdb
-  autotrim: on
+  autotrim: "on"
   ashift: 12
+  compression: "on"
 
 # Configuration of the datastore
 pbs_datastore:
@@ -28,7 +29,8 @@ pbs_datastore:
     role: RemoteSyncOperator
 
 gotify:
-  app_name: Proxmox Backup Server Back
+  app_name: Proxmox Backup Server Back - 159
+  token: "{{ vault_gotify_token_pbsback }}"
 
 pbs_sync:
   enabled: true
@@ -39,3 +41,4 @@ pbs_sync:
     host: 172.16.100.5
     port: 8007 # Explicit statement of default port
     datastore: lalaland-backups
+    fingerprint: "{{ vault_pbs_fingerprint.pbsfront }}"

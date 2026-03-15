@@ -5,11 +5,6 @@ pbs_packages:
 - rsyslog
 - zfsutils-linux
 
-zfs_pool:
-  autotrim: true
-  ashift: 12
-  compression: on
-
 graylog:
   type: syslog
   port: 514
