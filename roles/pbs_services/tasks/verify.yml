@@ -1,0 +1,13 @@
+# ./roles/pbs_services/tasks/verify.yml
+---
+- name: Create verification job
+  command: >
+    proxmox-backup-manager verify-job create verify-{{ pbs_datastore.name }} 
+     --store {{ pbs_datastore.name }} 
+     --schedule "{{ pbs_schedule.verify }}"  
+     --ignore-verified true 
+     --outdated-after 30
+  register: verify_create
+  changed_when: verify_create.rc == 0
+  failed_when: verify_create.rc != 0 and 'already exists' not in verify_create.stderr
+  become: true

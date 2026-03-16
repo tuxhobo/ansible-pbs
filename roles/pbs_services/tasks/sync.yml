@@ -1,0 +1,15 @@
+# ./roles/pbs_services/tasks/sync.yml
+---
+- name: Create sync job
+  command: >
+    proxmox-backup-manager sync-job create sync-{{ pbs_datastore.name }}
+     --store {{ pbs_datastore.name }}
+     --remote {{ pbs_sync.remote.id }}
+     --remote-store {{ pbs_sync.remote.datastore }}
+     --schedule "{{ pbs_sync.schedule }}"
+     --remove-vanished false
+  register: sync_create
+  changed_when: sync_create.rc == 0
+  failed_when: sync_create.rc != 0 and 'already exists' not in sync_create.stderr
+  when: pbs_sync.enabled | bool
+  become: true

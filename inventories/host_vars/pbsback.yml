@@ -34,6 +34,7 @@ gotify:
 
 pbs_sync:
   enabled: true
+  userid: sync@pbs
   direction: pull
   schedule: "02:00"
   remote:

@@ -1,0 +1,18 @@
+# ,/roles/pbs_services/prune.yml
+#
+---
+
+- name: Create prune job
+  command: >
+    proxmox-backup-manager prune-job create prune-{{ pbs_datastore.name }}
+     --store {{ pbs_datastore.name }}
+     --schedule "{{ pbs_schedule.prune }}"
+     --keep-daily {{ pbs_retention.keep_daily }}
+     --keep-weekly {{ pbs_retention.keep_weekly }}
+     --keep-monthly {{ pbs_retention.keep_monthly }}
+  register: prune_create
+  changed_when: prune_create.rc == 0
+  failed_when:
+  - prune_create.rc != 0
+  - "'already exists' not in prune_create.stderr"
+  become: true

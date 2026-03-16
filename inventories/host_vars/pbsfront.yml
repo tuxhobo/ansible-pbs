@@ -11,6 +11,7 @@ replication:
   route_subnet: 172.16.150.0/28
   # IP of the remote PVE host gateway on the replication network 
   remote_ip: 172.16.150.1 #used only for validation
+
 zfs_pool:
   name: dal_pool
   device: /dev/sdb

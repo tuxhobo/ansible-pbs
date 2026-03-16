@@ -1,0 +1,15 @@
+# ./roles/pbs_services/tasks/datastore.yml
+---
+- name: Set GC schedule on datastore
+  command: >
+    proxmox-backup-manager datastore update {{ pbs_datastore.name }} --gc-schedule "{{ pbs_schedule.gc }}"
+  become: true
+  changed_when: false
+
+- name: Set datastore user ACLs
+  command: >
+    proxmox-backup-manager acl update /datastore/{{ pbs_datastore.name }} {{ item.role }} --auth-id {{ item.name }}@pbs 
+  loop: "{{ pbs_datastore.pbs_users }}"
+  loop_control:
+    label: "{{ item.name }}@pbs -> {{ item.role }}"
+  become: true
