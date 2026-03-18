@@ -1,0 +1,88 @@
+# ./roles/pbs_notifications/tasks/gotify_endpoint.yml
+#
+# Configure Gotify notification endpoint using the PBS CLI.
+# Uses SSH key-based auth established by pbs-bootstrap.
+# Secrets sourced from Ansible Vault via host_vars.
+#
+# Inventory sources:
+#   gotify_server.url              group_vars/pbs_hosts/all.yml
+#   gotify_server.endpoint_name    group_vars/pbs_hosts/all.yml
+#   gotify_server.disable_mail_to_root  group_vars/pbs_hosts/all.yml
+#   gotify_config.app_name         host_vars/<host>.yml
+#   gotify_config.token            host_vars/<host>.yml (vault)
+#
+# Verified against PBS 4.1.4 CLI:
+#   gotify create <n> --server <string> --token <string> [--comment]
+#   gotify update <n>                   [--comment] [--delete comment|disable]
+#   gotify delete <n>
+#   gotify list   [--output-format json]
+#
+# NOTE: gotify update does NOT accept --server or --token.
+#       Server URL changes require delete + recreate.
+#       Token changes are not detectable — PBS does not expose the stored token.
+#       Token rotation requires a manual delete or forced re-run.
+---
+- name: List existing Gotify endpoints
+  command: >
+    proxmox-backup-manager notification endpoint gotify list --output-format json
+  register: gotify_list_raw
+  changed_when: false
+  become: true
+
+- name: Parse existing Gotify endpoint list
+  set_fact:
+    gotify_existing: "{{ (gotify_list_raw.stdout | default('[]') or '[]') | from_json }}"
+
+- name: Find existing endpoint by name
+  set_fact:
+    gotify_current: >-
+      {{
+        gotify_existing
+        | selectattr('name', 'equalto', gotify_server.endpoint_name)
+        | list
+        | first
+        | default({})
+      }}
+
+- name: Determine if endpoint exists
+  set_fact:
+    gotify_exists: "{{ gotify_current | length > 0 }}"
+
+- name: Determine if server URL differs from desired
+  set_fact:
+    gotify_server_changed: >-
+      {{
+        gotify_exists and
+        (gotify_current.get('server', '') != gotify_server.url)
+      }}
+
+- name: Delete existing Gotify endpoint if server URL changed
+  command: >
+    proxmox-backup-manager notification endpoint gotify delete {{ gotify_server.endpoint_name }}
+  when: gotify_server_changed | bool
+  become: true
+  notify: Reload PBS proxy
+
+- name: Create Gotify endpoint
+  # Runs when endpoint does not exist, or was just deleted due to server URL change.
+  command: >
+    proxmox-backup-manager notification endpoint gotify create {{ gotify_server.endpoint_name }} --server {{ gotify_server.url }} --token {{ gotify_config.token }} --comment "{{ gotify_config.app_name }}"
+  when: not gotify_exists | bool or gotify_server_changed | bool
+  no_log: false
+  become: true
+  notify: Reload PBS proxy
+
+- name: Update Gotify endpoint comment when endpoint exists and server URL is unchanged
+  # gotify update only accepts --comment, --disable, --delete comment|disable.
+  command: >
+    proxmox-backup-manager notification endpoint gotify update {{ gotify_server.endpoint_name }} --comment "{{ gotify_config.app_name }}"
+  when: gotify_exists | bool and not gotify_server_changed | bool
+  become: true
+  changed_when: false
+
+- name: Disable mail-to-root sendmail endpoint
+  command: >
+    proxmox-backup-manager notification endpoint sendmail update mail-to-root --disable true
+  when: gotify_server.disable_mail_to_root | bool
+  become: true
+  changed_when: false

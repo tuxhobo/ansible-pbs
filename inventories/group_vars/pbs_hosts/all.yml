@@ -55,7 +55,9 @@ gotify_server:
 #       pbsback does not receive backups directly from PVE.
 #       Both hosts use the same allowlist — the PBS event system
 #       only emits events for jobs that actually run.
-pbs_notification_match_fields:
-- "exact:type=gc,prune,sync,verification,acme,package-updates,tape-backup,tape-load"
 
-pbs_notification_match_severity: []
+pbs_notification:
+  mode: any
+  match_fields:
+  - "regex:type=^(gc|prune|sync|verification|acme|package-updates|tape-backup|tape-load)$"
+  match_severity: []

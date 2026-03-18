@@ -18,6 +18,6 @@
 - name: Disable subscription nag
   replace:
     path: /usr/share/javascript/proxmox-backup/js/proxmox-backup-gui.js
-    regexp: 'res\.data\.status\.toLowerCase\(\) !== ''active'''
-    replace: 'false'
+    regexp: "status\\.toLowerCase\\(\\) === 'active'"
+    replace: "true"
   notify: Restart proxy  # Optional: logic to clear cache/restart service

@@ -1,0 +1,4 @@
+# ./roles/pbs_notifications/tasks/main.yml
+---
+- import_tasks: gotify_endpoint.yml
+- import_tasks: notification_matcher.yml

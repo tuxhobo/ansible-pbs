@@ -1,0 +1,56 @@
+# ./roles/pbs_notifications/tasks/notification_matcher.yml
+#
+# Configure the PBS default-matcher via CLI.
+#
+# Inventory sources:
+#   gotify_server.endpoint_name         group_vars/pbs_hosts/all.yml
+#   pbs_notification.mode               group_vars/pbs_hosts/all.yml
+#   pbs_notification.match_fields       group_vars/pbs_hosts/all.yml
+#   pbs_notification.match_severity     group_vars/pbs_hosts/all.yml
+#
+# Verified against PBS 4.1.4 CLI:
+#   matcher update <n> [--target <string>]
+#                      [--match-field <string>]
+#                      [--match-severity <string>]
+#                      [--delete target|match-field|match-severity|...]
+#
+# Strategy: clear all targets and rules, then reapply from inventory.
+# This is the only safe idempotency pattern given PBS CLI update semantics —
+# repeated --match-field calls accumulate entries rather than replacing them.
+#
+# The default-matcher is created by PBS at install time and always exists.
+# No create step is needed.
+---
+- name: Clear all targets and rules from default-matcher
+  command: >
+    proxmox-backup-manager notification matcher update default-matcher --delete target --delete match-field --delete match-severity
+  become: true
+  changed_when: false
+
+- name: Set matcher mode to any
+  command: >
+    proxmox-backup-manager notification matcher update default-matcher --mode {{ pbs_notification.mode }}
+  become: true
+  changed_when: false
+
+- name: Set Gotify as target on default-matcher
+  command: >
+    proxmox-backup-manager notification matcher update default-matcher --target {{ gotify_server.endpoint_name }}
+  become: true
+  changed_when: false
+
+- name: Apply match-field rules
+  command: >
+    proxmox-backup-manager notification matcher update default-matcher --match-field {{ item }}
+  loop: "{{ pbs_notification.match_fields }}"
+  when: pbs_notification.match_fields | length > 0
+  become: true
+  changed_when: false
+
+- name: Apply match-severity rules
+  command: >
+    proxmox-backup-manager notification matcher update default-matcher --match-severity {{ item }}
+  loop: "{{ pbs_notification.match_severity }}"
+  when: pbs_notification.match_severity | length > 0
+  become: true
+  changed_when: false

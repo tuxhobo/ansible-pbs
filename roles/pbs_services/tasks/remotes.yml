@@ -5,7 +5,7 @@
     proxmox-backup-manager remote create {{ pbs_sync.remote.id }}
      --host {{ pbs_sync.remote.host }}
      --port {{ pbs_sync.remote.port }}
-     --userid {{ pbs_sync.userid }}
+     --auth-id {{ pbs_sync.userid }}
      --password {{ vault_sync_password }}
      --fingerprint {{ pbs_sync.remote.fingerprint }}
   register: remote_create

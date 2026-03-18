@@ -34,7 +34,7 @@ pbs_datastore:
 # gotify_server (url, endpoint_name, disable_mail_to_root) is in group_vars/all.yml.
 gotify_config:
   app_name: Proxmox Backup Server Front - 109
-  token: "{{ vault_gotify_token_pbsfront }}"
+  token: "{{ vault_gotify_token.pbsfront }}"
 
 pbs_sync:
   enabled: false

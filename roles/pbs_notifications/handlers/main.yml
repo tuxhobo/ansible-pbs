@@ -1,0 +1,8 @@
+# ./roles/pbs_notifications/handlers/main.yml
+
+---
+- name: Reload PBS proxy
+  systemd:
+    name: proxmox-backup-proxy
+    state: restarted
+  become: true
