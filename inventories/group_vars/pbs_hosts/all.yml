@@ -1,10 +1,18 @@
 # ./inventories/group_vars/pbs_hosts/all.yml
 #
+# Group variables common to all PBS hosts.
+# This is the single group_vars file for pbs_hosts.
 # domain and loaction information
+
 ansible_python_interpreter: /usr/bin/python3
 
 timezone: America/New_York
 domain_name: lalalandus.com
+
+# Package list installed by pbs_bootstrap playbook for all PBS instances
+pbs_packages:
+- rsyslog
+- zfsutils-linux
 
 pbs_schedule:
   verify: "sat 18:15"
@@ -15,3 +23,39 @@ pbs_retention:
   keep_daily: 7
   keep_weekly: 4
   keep_monthly: 3
+
+# --- Graylog server ---
+# Describes the Graylog server itself. Same for all PBS hosts.
+graylog:
+  bind_address: 10.0.0.104
+  type: syslog
+  port: 514
+  protocol: udp
+
+# --- Gotify server ---
+# Describes the Gotify server itself. Same for all PBS hosts.
+# Host-specific client config (app_name, token) is in host_vars as gotify_config.
+gotify_server:
+  url: "http://10.0.0.6"
+  endpoint_name: "Gotify.006"
+  disable_mail_to_root: true
+
+# --- Notification matcher rules ---
+# Applied to the PBS default-matcher on all hosts.
+#
+# Explicit type allowlist excludes system-mail events.
+# system-mail is suppressed — Gotify is the only notification channel.
+# No email delivery is configured or wanted.
+#
+# All PBS 4.1.4 event types:
+#   gc, prune, sync, verification, acme,
+#   package-updates, tape-backup, tape-load, system-mail
+#
+# Note: pbsfront does not emit sync events (it is the sync source).
+#       pbsback does not receive backups directly from PVE.
+#       Both hosts use the same allowlist — the PBS event system
+#       only emits events for jobs that actually run.
+pbs_notification_match_fields:
+- "exact:type=gc,prune,sync,verification,acme,package-updates,tape-backup,tape-load"
+
+pbs_notification_match_severity: []

@@ -25,6 +25,7 @@
   command: proxmox-backup-manager datastore list --output-format json
   register: pbs_ds_list
   changed_when: false
+  check_mode: false
   failed_when:
     - pbs_ds_create.rc is defined
     - pbs_ds_create.rc != 0

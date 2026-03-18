@@ -8,4 +8,4 @@
 
   roles:
     - pbs_services
-    - pbs_notifications
+   # - pbs_notifications

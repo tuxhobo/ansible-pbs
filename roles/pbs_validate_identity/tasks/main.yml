@@ -7,6 +7,7 @@
     echo "$(hostname -f)"
   register: identity_check
   changed_when: false
+  check_mode: false
 
 - name: Validate System Identity
   assert:

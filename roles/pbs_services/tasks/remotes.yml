@@ -12,5 +12,5 @@
   changed_when: remote_create.rc == 0
   failed_when: remote_create.rc != 0 and 'already exists' not in remote_create.stderr
   when: pbs_sync.enabled | bool
-  no_log: true
+  no_log: false
   become: true
