@@ -198,15 +198,6 @@ proceed to the pbs-services run book
 
 
 
-Next is for the services run book
-
-## Step 6 Manual configuration Gotify
-
-Login to the Gotify application
-
-- Click CREATE APPLICATION
-    - pbsfront-109 - PBS instance on lala100
-    - pbsback-159 - PBS instance on lala150
 
 
 
