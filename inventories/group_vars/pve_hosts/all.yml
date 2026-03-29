@@ -1,0 +1,54 @@
+# ./inventories/group_vars/pve_hosts/all.yml
+#
+# PVE cluster-wide configuration: backup storage and backup job policy.
+#
+# This file defines how the PVE cluster interacts with the PBS server.
+# PBS server self-configuration is in group_vars/pbs_hosts/.
+#
+# Intentional overlap with pbsfront host_vars:
+#   - server IP and datastore name are duplicated by design.
+#   - The two concerns are separate: how PBS configures itself vs how PVE talks to PBS.
+#   - If pbsfront changes, update both files.
+#
+# --- PBS storage target registered with the PVE cluster ---
+pve_cluster_storage:
+  name: cluster-backup-server
+  type: pbs
+  # enabled: true  #not supported
+  content: backup
+  keep_all: true # retention managed on PBS; PVE defers to PBS prune
+  nodes: # omit or set list to restrict to specific nodes
+
+  # PBS-specific options. Nested under pbs_options per module API.
+  pbs_options:
+    server: 10.0.0.109 # pbsfront management IP
+    username: backup@pbs
+    password: "{{ vault_pbs_user_password }}"
+    datastore: lalaland-backups # must match pbsfront pbs_datastore.name
+    fingerprint: "{{ vault_pbs_fingerprint.pbsfront }}"
+
+# --- PVE backup job ---
+pve_backup_job:
+  id: pbs-daily # unique job identifier in /etc/pve/jobs.cfg
+  storage: "{{ pve_cluster_storage.name }}"
+  schedule: "02:00"
+  mode: snapshot
+  compression: zstd
+  enabled: true
+  selection_mode: include # explicit include list, not all
+  notification_mode: notification-system
+  # Explicit VMID include list.
+  # Only these entities are backed up. Add or remove VMIDs here.
+  vmids:
+  - 104
+  - 105
+  - 110
+  - 112
+  - 115
+  - 125
+  - 140
+  - 160
+  - 1008006
+  - 1008007
+  - 1008010
+  - 1100107

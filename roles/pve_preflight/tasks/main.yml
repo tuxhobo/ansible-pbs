@@ -1,0 +1,41 @@
+# ./roles/pve_preflight/tasks/main.yml
+#
+# Validates alignment between duplicated inventory values before any changes
+# are made to the PVE cluster. Fails fast with a clear message on mismatch.
+# No changes made to any system.
+
+---
+- name: Assert pbsfront IP matches between hosts.yml and pve_cluster_storage
+  assert:
+    that:
+      - pve_cluster_storage.pbs_options.server == hostvars['pbsfront'].ansible_host
+    fail_msg: >
+      IP mismatch: pve_cluster_storage.pbs_options.server is
+      '{{ pve_cluster_storage.pbs_options.server }}' but
+      hostvars['pbsfront'].ansible_host is
+      '{{ hostvars['pbsfront'].ansible_host }}'.
+      Fix pve_hosts/all.yml or hosts.yml.
+    success_msg: "pbsfront IP is consistent across inventory."
+
+- name: Assert datastore name matches between pbsfront host_vars and pve_cluster_storage
+  assert:
+    that:
+      - pve_cluster_storage.pbs_options.datastore == hostvars['pbsfront'].pbs_datastore.name
+    fail_msg: >
+      Datastore mismatch: pve_cluster_storage.pbs_options.datastore is
+      '{{ pve_cluster_storage.pbs_options.datastore }}' but
+      pbsfront pbs_datastore.name is
+      '{{ hostvars['pbsfront'].pbs_datastore.name }}'.
+      Fix pve_hosts/all.yml or host_vars/pbsfront.yml.
+    success_msg: "Datastore name is consistent across inventory."
+
+- name: Assert backup job storage references pve_cluster_storage name
+  assert:
+    that:
+      - pve_backup_job.storage == pve_cluster_storage.name
+    fail_msg: >
+      Storage reference mismatch: pve_backup_job.storage is
+      '{{ pve_backup_job.storage }}' but pve_cluster_storage.name is
+      '{{ pve_cluster_storage.name }}'.
+      Fix pve_hosts/all.yml.
+    success_msg: "Backup job storage reference is consistent."

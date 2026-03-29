@@ -1,0 +1,27 @@
+# ./playbooks/pve-backup-config.yml
+#
+# Configures the PVE cluster to use PBS as a backup storage target
+# and creates the scheduled backup job.
+#
+# Runs against pve_hosts. Uses the PVE API — no SSH connection to PVE required.
+# All values come from inventories/group_vars/pve_hosts/all.yml and vault.
+#
+# Prerequisites:
+#   - pbsfront is running and configured
+#   - vault_pve_api_token is set in vault
+#   - vault_pbs_user_password is set in vault
+#   - vault_pbs_fingerprint_pbsfront is set in vault
+
+---
+- name: Configure PVE cluster backup target and backup job
+  hosts: pve_hosts
+  gather_facts: false
+  connection: local
+
+  roles:
+    - role: pve_preflight
+      tags: [preflight]
+    - role: pve_cluster_storage
+      tags: storage
+    - role: pve_backup_job
+      tags: backup_job

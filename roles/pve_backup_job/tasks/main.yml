@@ -1,0 +1,73 @@
+# ./roles/pve_backup_job/tasks/main.yml
+#
+# Creates or updates a PVE cluster backup job via the PVE REST API.
+# Endpoint: /api2/json/cluster/backup
+# No Ansible module available for this. Uses uri module directly.
+# No SSH. No shell commands.
+#
+# Idempotent:
+#   - GET /cluster/backup to check if job id exists
+#   - POST to create if missing
+#   - PUT to update if present
+
+---
+- name: Get existing backup jobs from PVE API
+  uri:
+    url: "https://{{ pve_api.host }}:8006/api2/json/cluster/backup"
+    method: GET
+    headers:
+      Authorization: "PVEAPIToken={{ pve_api.user }}!{{ pve_api.token_id }}={{ pve_api.token_secret }}"
+    validate_certs: "{{ pve_api.validate_certs }}"
+    status_code: 200
+  register: existing_jobs
+
+- name: Set job existence flag
+  set_fact:
+    backup_job_exists: >-
+      {{ existing_jobs.json.data |
+         selectattr('id', 'equalto', pve_backup_job.id) |
+         list | length > 0 }}
+
+- name: DEBUG - Backup job existence
+  debug:
+    msg: "Backup job {{ pve_backup_job.id }} exists: {{ backup_job_exists }}"
+
+- name: Create backup job via PVE API
+  uri:
+    url: "https://{{ pve_api.host }}:8006/api2/json/cluster/backup"
+    method: POST
+    headers:
+      Authorization: "PVEAPIToken={{ pve_api.user }}!{{ pve_api.token_id }}={{ pve_api.token_secret }}"
+    validate_certs: "{{ pve_api.validate_certs }}"
+    body_format: form-urlencoded
+    body:
+      id:                  "{{ pve_backup_job.id }}"
+      storage:             "{{ pve_backup_job.storage }}"
+      schedule:            "{{ pve_backup_job.schedule }}"
+      mode:                "{{ pve_backup_job.mode }}"
+      compress:            "{{ pve_backup_job.compression }}"
+      enabled:             "{{ 1 if pve_backup_job.enabled | bool else 0 }}"
+      vmid:                "{{ pve_backup_job.vmids | join(',') }}"
+      notification-mode:   "{{ pve_backup_job.notification_mode }}"
+    status_code: 200
+  when: not backup_job_exists | bool
+
+- name: Update backup job via PVE API
+  uri:
+    url: "https://{{ pve_api.host }}:8006/api2/json/cluster/backup/{{ pve_backup_job.id }}"
+    method: PUT
+    headers:
+      Authorization: "PVEAPIToken={{ pve_api.user }}!{{ pve_api.token_id }}={{ pve_api.token_secret }}"
+    validate_certs: "{{ pve_api.validate_certs }}"
+    body_format: form-urlencoded
+    body:
+      storage:             "{{ pve_backup_job.storage }}"
+      schedule:            "{{ pve_backup_job.schedule }}"
+      mode:                "{{ pve_backup_job.mode }}"
+      compress:            "{{ pve_backup_job.compression }}"
+      enabled:             "{{ 1 if pve_backup_job.enabled | bool else 0 }}"
+      vmid:                "{{ pve_backup_job.vmids | join(',') }}"
+      notification-mode:   "{{ pve_backup_job.notification_mode }}"
+    status_code: 200
+  when: backup_job_exists | bool
+  

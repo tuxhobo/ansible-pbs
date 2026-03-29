@@ -261,5 +261,135 @@ I'm an engineer, not an IT professional. I use this home lab as a learning tool,
 2. *pve-vm-create.md* — Creates the PBS virtual machines on two PVE hosts and documents the manual PBS appliance installation steps.
 3. *pbs-bootstrap.md* — Configures each PBS VM, including ZFS pool setup and network configuration.
 4. *pbs-services.md* — Completes PBS instance configuration to meet the home lab's operational objectives.
+5. *pve-backup-config* - Configure cluster storage and backup job.
 
 Note: These run books mix manual and automated steps throughout.
+
+---
+
+# 11. Backup Retention Strategy
+
+## 11.1 Current retention policy
+
+Both PBS instances prune on the same schedule using the same retention policy:
+
+| Parameter    | Value |
+| ------------ | ----- |
+| Keep daily   | 7     |
+| Keep weekly  | 4     |
+| Keep monthly | 3     |
+| Prune schedule | Monday 14:00 |
+
+This retains approximately 3 months of backup history with decreasing
+granularity over time. Daily snapshots cover the most recent week, weekly
+snapshots extend coverage to one month, and monthly snapshots provide
+quarterly reach.
+
+PBS prune selects the best snapshot to satisfy each retention bucket.
+Snapshots can satisfy multiple buckets simultaneously — a Sunday backup
+counts as both a daily and a weekly — so the actual number of retained
+snapshots is less than the sum of the three parameters.
+
+## 11.2 What the policy does not address
+
+**Flat policy applied to all workloads.**
+Every VM and LXC container in the backup job shares the same retention
+parameters. This is operationally simple but ignores meaningful differences
+between workloads:
+
+| Workload | Consideration |
+| --- | --- |
+| Home Assistant | Configuration changes frequently. A slow-burn misconfiguration may not surface within 7 days. |
+| PiHole | DNS config is small and changes infrequently. Retention is largely irrelevant. |
+| PlexMediaServer | State value is in the media library, not the VM. PBS backup is low value here. |
+| TrueNAS (primary) | Already protected by ZFS snapshots and replication. PBS backup is a tertiary copy. |
+| TrueNAS (secondary) | Same as above. Retention here has real disk cost. |
+| Graylog | Indexed log data grows continuously. Snapshot size increases over time. |
+| Docker | Depends entirely on what is stateful inside the VM. |
+
+A flat policy is the right starting point. Differentiation by workload is the
+correct next step if disk capacity becomes constrained.
+
+## 11.3 Deduplication and actual disk consumption
+
+PBS uses chunk-based content-addressed storage. Snapshots that share data —
+same OS base, same installed packages — share chunks on disk. Actual disk
+consumption is substantially less than the sum of retained snapshot sizes.
+
+Current datastore utilization is approximately 16% of 400 GiB. Before
+adjusting retention, check the deduplication ratio from the pbsfront web UI:
+
+```
+pbsfront UI → Datastore → lalaland-backups → Summary
+```
+
+The Summary panel reports total size, used space, available space, and
+deduplication ratio. The CLI command `proxmox-backup-manager datastore show`
+returns configuration only — not storage statistics.
+
+The deduplication ratio should be the primary input to any retention tuning
+decision. A high ratio means retention is cheap. A low ratio means each
+additional snapshot consumes proportionally more disk.
+
+## 11.4 Secondary PBS retention and remove_vanished
+
+pbsback mirrors pbsfront's retention policy via independent prune jobs.
+Pruning on pbsfront removes snapshots from the primary datastore. Whether
+those removals propagate to pbsback depends on the `remove_vanished` setting
+in the pbsback sync job.
+
+**If `remove_vanished` is enabled**: snapshots pruned on pbsfront are removed
+from pbsback on the next sync cycle. Both servers converge to the same
+retention window.
+
+**If `remove_vanished` is disabled**: pbsback accumulates indefinitely.
+Retention on pbsback is only controlled by the pbsback prune job, which runs
+independently of pbsfront pruning.
+
+Verify the current setting on pbsback:
+
+```
+pbsback UI → Datastore → secondary-backups → Sync Jobs → Edit
+```
+
+Check the `Remove Vanished` field.
+
+The correct setting depends on intent. If pbsback is a mirror, enable it. If
+pbsback is intended to hold longer retention than pbsfront — acting as a
+longer-term archive — disable it and configure a separate, less aggressive
+prune schedule on pbsback.
+
+The current design treats pbsback as a mirror. `remove_vanished` should be
+enabled for consistency.
+
+## 11.5 Verification and retention interaction
+
+The verify job runs weekly and re-verifies snapshots after 30 days. If the
+prune job removes a snapshot before the weekly verify run processes it, that
+snapshot exits the system unverified.
+
+With the current 7-day daily retention window and a weekly verify schedule,
+any snapshot created and pruned within the same 7-day window may not be
+verified before removal. In practice this affects only the oldest daily
+snapshot in the retention window, and only in the narrow interval between
+prune and verify runs.
+
+This is accepted risk at home lab scale. The mitigation is the verify
+re-check after 30 days, which catches any corruption in snapshots that
+survive long enough to enter the weekly or monthly retention buckets.
+
+## 11.6 Retention tuning decision criteria
+
+Do not adjust the retention policy based on intuition. Adjust it based on
+observed data after at least 60 days of operation:
+
+1. Check actual disk utilization on both PBS instances.
+2. Check the deduplication ratio on both datastores.
+3. Review whether any restore has ever needed to reach beyond the 7-day daily
+   window.
+4. Review whether the 3 monthly snapshots have ever been accessed.
+
+If the monthly snapshots have never been used and disk is not constrained,
+the policy is working and requires no change. If disk becomes constrained,
+the correct first action is to evaluate which workloads justify their
+retention cost — not to uniformly reduce all parameters.

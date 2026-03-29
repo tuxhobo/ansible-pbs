@@ -1,0 +1,37 @@
+# ./roles/pve_cluster_storage/tasks/main.yml
+#
+# Registers the PBS server as a storage target in the PVE cluster.
+# Idempotent: proxmox_storage state=present handles create-or-update natively.
+# No SSH. No shell commands.
+#
+# Module reference: community.proxmox.proxmox_storage
+# PBS-specific parameters are nested under pbs_options, not flat.
+# Storage is identified by "name", not "storage".
+
+---
+- name: Register PBS as PVE cluster storage target
+  community.proxmox.proxmox_storage:
+    api_host:         "{{ pve_api.host }}"
+    api_user:         "{{ pve_api.user }}"
+    api_token_id:     "{{ pve_api.token_id }}"
+    api_token_secret: "{{ pve_api.token_secret }}"
+    validate_certs:   "{{ pve_api.validate_certs }}"
+
+    name:             "{{ pve_cluster_storage.name }}"
+    type:             "{{ pve_cluster_storage.type }}"
+    nodes:            "{{ pve_cluster_storage.nodes | default(omit) }}"
+    content:          "{{ pve_cluster_storage.content }}"
+    # disable:          "{{ not pve_cluster_storage.enabled | bool }}"
+
+    # Retention is managed on PBS. Derived from inventory keep_all boolean.
+    # prune_backups:    "keep-all={{ 1 if pve_cluster_storage.keep_all | bool else 0 }}"
+
+    pbs_options:
+      server:         "{{ pve_cluster_storage.pbs_options.server }}"
+      username:       "{{ pve_cluster_storage.pbs_options.username }}"
+      password:       "{{ pve_cluster_storage.pbs_options.password }}"
+      datastore:      "{{ pve_cluster_storage.pbs_options.datastore }}"
+      fingerprint:    "{{ pve_cluster_storage.pbs_options.fingerprint }}"
+
+    state: present
+    # no_log: true  # password in pbs_options
