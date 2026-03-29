@@ -26,9 +26,10 @@ This run book covers:
 - SSH key generation
 
 It intentionally stops **before**:
-- VM creation (covered in `pve-vm-create`)
-- PBS bootstrap (covered in `pbs-bootstrap`)
-- PBS service configuration (covered in future `pbs-configure` run book)
+- VM creation (covered in `pve-vm-create.md`)
+- PBS bootstrap (covered in `pbs-bootstrap.md`)
+- PBS service configuration (covered in `pbs-services.md`)
+- PVE backup job configuration (covered in `pve-backup-config.md`)
 
 ---
 
@@ -90,7 +91,7 @@ cd ~/home-lab/ansible-pbs
 All subsequent steps assume the working directory is `~/home-lab/ansible-pbs`.
 
 
-Reference layout:
+Initial reference layout:
 
 ```
 ├── LICENSE
@@ -104,15 +105,19 @@ Reference layout:
 │   └── requirements.yml
 ├── docs
 │   └── run
-│       ├── configure-ansible.md
+│       ├── configure_ansible.md
 │       ├── pbs-bootstrap.md
+│       ├── pbs-services.md
+│       ├── pve-backup-config.md
 │       └── pve-vm-create.md
+├── git-agent.sh
 ├── inventories
 │   ├── group_vars
 │   │   ├── pbs_hosts
 │   │   │   ├── all.yml
-│   │   │   └── vars.yml
+│   │   │   └── vault.yml
 │   │   └── pve_hosts
+│   │       ├── all.yml
 │   │       ├── vars.yml
 │   │       └── vault.yml
 │   ├── host_vars
@@ -124,20 +129,52 @@ Reference layout:
 ├── pbs-context.txt
 ├── playbooks
 │   ├── pbs-bootstrap.yml
-│   ├── pbs-bootstrap.yml.sav
+│   ├── pbs-service-config.yml
+│   ├── pve-backup-config.yml
 │   └── pve-vm-create.yml
 └── roles
+    ├── pbs_graylog
+    │   ├── handlers
+    │   │   └── main.yml
+    │   ├── tasks
+    │   │   └── main.yml
+    │   └── templates
+    │       └── 60-graylog.conf.j2
     ├── pbs_hardening
     │   ├── handlers
     │   │   └── main.yml
     │   └── tasks
     │       └── main.yml
+    ├── pbs_notifications
+    │   ├── handlers
+    │   │   └── main.yml
+    │   └── tasks
+    │       ├── gotify_endpoint.yml
+    │       ├── main.yml
+    │       └── notification_matcher.yml
     ├── pbs_packages
     │   └── tasks
     │       └── main.yml
     ├── pbs_ping_test
     │   └── tasks
     │       └── main.yml
+    ├── pbs_replication_net
+    │   ├── handlers
+    │   │   └── main.yml
+    │   └── tasks
+    │       └── main.yml
+    ├── pbs_replication_validate
+    │   └── tasks
+    │       └── main.yml
+    ├── pbs_services
+    │   └── tasks
+    │       ├── datastore.yml
+    │       ├── main.yml
+    │       ├── prune.yml
+    │       ├── remotes.yml
+    │       ├── sync.yml
+    │       ├── users.yml
+    │       └── verify.yml
     ├── pbs_update
     │   ├── handlers
     │   │   └── main.yml
@@ -149,16 +186,25 @@ Reference layout:
     ├── pbs_zfs_datastore
     │   └── tasks
     │       └── main.yml
-    └── pve-vm-create
-        ├── README.md
-        ├── defaults
-        │   └── main.yml
+    ├── pve-vm-create
+    │   ├── README.md
+    │   ├── defaults
+    │   │   └── main.yml
+    │   └── tasks
+    │       └── main.yml
+    ├── pve_backup_job
+    │   └── tasks
+    │       └── main.yml
+    ├── pve_cluster_storage
+    │   └── tasks
+    │       └── main.yml
+    └── pve_preflight
         └── tasks
             └── main.yml
 
-30 directories, 35 files
+50 directories, 57 files
 ```
-
+Note: this layout may evolve with time
 ---
 
 ## Step 4: Create ansible.cfg

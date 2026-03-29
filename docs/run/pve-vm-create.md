@@ -105,10 +105,10 @@ ansible-inventory --graph || exit 1
 ```
 ### Validate inventory read and vault access
 ```bash
-ansible-inventory -i inventories/pve/hosts.yml --list --ask-vault-pass
+ansible-inventory -i inventories/hosts.yml --list --ask-vault-pass
 ```
 
-### Expected result from ansib;e-inventory --graph
+### Expected result from ansible-inventory --graph
 ```
 @all:
   |--@ungrouped:
@@ -122,8 +122,8 @@ ansible-inventory -i inventories/pve/hosts.yml --list --ask-vault-pass
 
 Validate inventory parsing and variable resolution.
 ```bash
-ansible-inventory -i inventories/pve/hosts.yml --host lala100 --ask-vault-pass
-ansible-inventory -i inventories/pve/hosts.yml --host lala150 --ask-vault-pass
+ansible-inventory -i inventories/hosts.yml --host lala100 --ask-vault-pass
+ansible-inventory -i inventories/hosts.yml --host lala150 --ask-vault-pass
 ```
 ### Expected result
 - Commands succeed
@@ -171,7 +171,7 @@ Run for a single VM (recomended)
 ```bash
 ansible-playbook playbooks/pve-vm-create.yml --limit lala100 --ask-vault-pass
 ```
-### Expected result \
+### Expected result
 - VM(s) created or confirmed present
 - VMs are not automatically started
 - Disk backup flags are disabled
@@ -188,7 +188,7 @@ Decide on the right version to download. Current version is 4.1-1.
 [PBS Downloads](https://www.proxmox.com/en/downloads/proxmox-backup-server)
 
 Download the ISO to each target host. In the Proxmox UI:
-Datacenter->lala100->locak (lala100)-> ISO images->Download from URL
+Datacenter->lala100->local (lala100)-> ISO images->Download from URL
 
 ### 4.1 Attach PBS ISO
 1. In the Proxmox UI:

@@ -3,7 +3,7 @@
 # Purpose
 Perform initial configuration of a freshly installed Proxmox Backup Server (PBS) virtual machines in a repeatable, auditable, low-risk manner.
 
-This run book follows the steps in pve-vm-install.md. Follow the steps in this run book only after the procedures in that run book are complete without error.
+This run book follows the steps in pve-vm-create.md. Follow the steps in this run book only after the procedures in that run book are complete without error.
 
 This document is written for a future operator with **no prior context**.
 Follow the steps exactly and in order.
@@ -70,7 +70,7 @@ root@host:~# apt update && apt full-upgrade
     usermod -aG sudo ansible
 ```
 
-## Step 3: SSH Key Creation
+## Step 4: SSH Key Creation
 - On the ansible control host create an ssh key exclusively for ansible
 ```bash
 # ssh-keygen -t ed25519 -f ~/.ssh/ansible_pbs_key
@@ -96,11 +96,11 @@ Expect the following result:
 
 Close web browser to pbs instance.
 
-## Step 4: Execute pbs_bootstrap
+## Step 5: Execute pbs-bootstrap playbook
 From the ansible host
 ### Run for all PBS VMs
 ```bash
-ansible-playbook playbooks/pbs_bootstrap.yml
+ansible-playbook playbooks/pbs-bootstrap.yml
 ```
 Run for a single VM (recomended)
 ```bash
@@ -115,7 +115,7 @@ Stop and investigate failures.
 
 
 
-## Step 5: Verify result
+## Step 6: Verify result
 Manually verify configuration
 
 1. Check ansible user hardning
@@ -128,6 +128,7 @@ Expected result:
 ```bash
 ansible@<pbs_ip_address>: Permission denied (publickey).
 ```
+Expected result confirms that password is blocked --> *Permission denied* is the *success* result.
 
 2. Check PBS configuration
 
@@ -160,7 +161,7 @@ Login to the Graylog UI
 
 
 
-### Step 6:  Consistency check (recommended)
+### Step 7:  Consistency check (recommended)
 Run from Ansible control host
 ```bash
 ansible-playbook playbooks/pbs-bootstrap.yml
@@ -195,13 +196,3 @@ proceed to the pbs-services run book
 - Update run book as procedures evolve 
     - Ansible syntax
     - New PBS procedures with upgrade
-
-
-
-
-
-
-
-
-
-

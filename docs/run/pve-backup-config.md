@@ -253,6 +253,7 @@ Datacenter → lala100 →  104 (graylog104) → Backup → Run Now
 
 Do not run all VMIDs on the first
 test — if something is wrong you want a small blast radius.
+ID 104 is relatively small today. Possibly choose another in the future.
 
 Monitor progress:
 Datacenter → Backup → Job Log

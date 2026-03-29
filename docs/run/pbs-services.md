@@ -173,18 +173,19 @@ Any unexpected fatal error is a stop condition. Investigate before proceeding.
 
 ## Step 5: Execute the Playbook
 
-### Run for all PBS hosts (recommended first time)
+### Run for all PBS hosts 
 
 ```bash
 ansible-playbook playbooks/pbs-service-config.yml
 ```
 
-### Run for a single host
+### Run for a single host (recommended first time)
 
 ```bash
 ansible-playbook playbooks/pbs-service-config.yml --limit pbsfront
 ansible-playbook playbooks/pbs-service-config.yml --limit pbsback
 ```
+Using --limit on first run controls the blast radius.
 
 ### Expected result
 
