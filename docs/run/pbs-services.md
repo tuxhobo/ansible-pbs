@@ -158,7 +158,7 @@ Stop if any value is missing or placeholder. Fix before proceeding.
 Run the playbook in check mode first.
 
 ```bash
-ansible-playbook playbooks/pbs-service-config.yml --check
+ansible-playbook playbooks/pbs-service-config.yml --ask-vault-pass --check
 ```
 
 ### Expected result
@@ -176,14 +176,14 @@ Any unexpected fatal error is a stop condition. Investigate before proceeding.
 ### Run for all PBS hosts 
 
 ```bash
-ansible-playbook playbooks/pbs-service-config.yml
+ansible-playbook playbooks/pbs-service-config.yml --ask-vault-pass
 ```
 
 ### Run for a single host (recommended first time)
 
 ```bash
-ansible-playbook playbooks/pbs-service-config.yml --limit pbsfront
-ansible-playbook playbooks/pbs-service-config.yml --limit pbsback
+ansible-playbook playbooks/pbs-service-config.yml --ask-vault-pass --limit pbsfront
+ansible-playbook playbooks/pbs-service-config.yml --ask-vault-pass --limit pbsback
 ```
 Using --limit on first run controls the blast radius.
 
@@ -284,7 +284,7 @@ Match Rules should include `type=sync`.
 Re-run the playbook with no manual changes. The result must be idempotent.
 
 ```bash
-ansible-playbook playbooks/pbs-service-config.yml
+ansible-playbook playbooks/pbs-service-config.yml --ask-vault-pass
 ```
 
 ### Expected result

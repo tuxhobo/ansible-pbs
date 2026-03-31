@@ -13,6 +13,7 @@
       # autotrim: "{{ zfs_pool.autotrim }}"  # not supported by Ansible module, set via command below
     filesystem_properties:
       compression: "{{ zfs_pool.compression }}"
+      mountpoint: "{{ pbs_datastore.path }}" 
     state: present
 
 - name: Set autotrim on ZFS pool

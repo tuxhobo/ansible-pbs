@@ -100,11 +100,11 @@ Close web browser to pbs instance.
 From the ansible host
 ### Run for all PBS VMs
 ```bash
-ansible-playbook playbooks/pbs-bootstrap.yml
+ansible-playbook playbooks/pbs-bootstrap.yml --ask-vault-pass
 ```
 Run for a single VM (recomended)
 ```bash
-ansible-playbook playbooks/pbs-bootstrap.yml --limit pbsback
+ansible-playbook playbooks/pbs-bootstrap.yml --ask-vault-pass --limit pbsback 
 ```
 ### Expected result 
 All tasks complete with OK
@@ -164,7 +164,7 @@ Login to the Graylog UI
 ### Step 7:  Consistency check (recommended)
 Run from Ansible control host
 ```bash
-ansible-playbook playbooks/pbs-bootstrap.yml
+ansible-playbook playbooks/pbs-bootstrap.yml --ask-vault-pass
 ```
 Expected:
 - No changes reported

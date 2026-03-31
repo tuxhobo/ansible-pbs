@@ -68,6 +68,7 @@
       enabled:             "{{ 1 if pve_backup_job.enabled | bool else 0 }}"
       vmid:                "{{ pve_backup_job.vmids | join(',') }}"
       notification-mode:   "{{ pve_backup_job.notification_mode }}"
+      notes-template:      "{{ pve_backup_job.notes_template }}"
     status_code: 200
   when: backup_job_exists | bool
   

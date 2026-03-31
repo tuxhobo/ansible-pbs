@@ -37,6 +37,7 @@ pve_backup_job:
   enabled: true
   selection_mode: include # explicit include list, not all
   notification_mode: notification-system
+  notes_template: "{{ '{{guestname}}' }}"
   # Explicit VMID include list.
   # Only these entities are backed up. Add or remove VMIDs here.
   vmids:
