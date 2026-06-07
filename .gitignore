@@ -1,0 +1,25 @@
+.vscode/
+ansible-pbs.tar
+git-agent.sh
+pbs-context.txt
+
+# Vault password files
+.vault_pass*
+*.vault_pass
+.ansible/
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Unencrypted drafts
+*.unencrypted
+
+# Ansible retry files
+*.retry
+
+# Logs
+*.log
+/tmp/
